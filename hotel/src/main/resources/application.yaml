@@ -1,0 +1,14 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /hotel
+
+spring:
+  datasource:
+    url: "jdbc:mysql://localhost:3306/hotel_management"
+    username: root
+    password: root
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
