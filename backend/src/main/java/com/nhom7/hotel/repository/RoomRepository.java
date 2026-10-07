@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
 
+//code chay tam
 @Repository
 public interface RoomRepository extends JpaRepository<Room, String> {
 
@@ -40,21 +41,7 @@ public interface RoomRepository extends JpaRepository<Room, String> {
 }
 
 
-
-
-
-//package com.nhom7.hotel.repository;
-
-// import com.nhom7.hotel.entity.Room;
-// import com.nhom7.hotel.enums.RoomStatus;
-// import org.springframework.data.jpa.repository.JpaRepository;
-// import org.springframework.data.jpa.repository.Query;
-// import org.springframework.data.repository.query.Param;
-// import org.springframework.stereotype.Repository;
-
-// import java.time.LocalDate;
-// import java.util.List;
-
+// code chuan neu co query findAvailableRoom tham chieu toi bookingDetails,...
 // @Repository
 // public interface RoomRepository extends JpaRepository<Room, String> {
 

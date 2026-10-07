@@ -1,10 +1,11 @@
+//code cu
 // package com.nhom7.hotel.config;
 
 // public class SecurityConfig {
 
-// } code cu
+// } 
 
-
+//code chay tam trong postman
 package com.nhom7.hotel.config;
 
 import org.springframework.context.annotation.Bean;
