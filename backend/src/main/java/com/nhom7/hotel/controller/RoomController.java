@@ -22,16 +22,16 @@ public class RoomController {
 
     @PostMapping("/room")
     ApiResponse<RoomResponse> createRoom(@RequestBody @Valid CreateRoomRequest request) {
-        return ApiResponse.<RoomResponse>builder()
-                .result(roomService.createRoom(request))
-                .build();
+        ApiResponse<RoomResponse> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(roomService.createRoom(request));
+        return apiResponse;
     }
 
     @GetMapping("/room")
     ApiResponse<List<RoomResponse>> getRooms() {
-        return ApiResponse.<List<RoomResponse>>builder()
-                .result(roomService.getRooms())
-                .build();
+        ApiResponse<List<RoomResponse>> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(roomService.getRooms());
+        return apiResponse;
     }
 
     @GetMapping("/room/search")
@@ -40,74 +40,74 @@ public class RoomController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOut,
             @RequestParam(required = false) Integer guests,
             @RequestParam(required = false) String roomTypeId) {
-        return ApiResponse.<List<RoomResponse>>builder()
-                .result(roomService.searchAvailableRooms(checkIn, checkOut, guests, roomTypeId))
-                .build();
+        ApiResponse<List<RoomResponse>> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(roomService.searchAvailableRooms(checkIn, checkOut, guests, roomTypeId));
+        return apiResponse;
     }
 
     @GetMapping("/room/{roomId}")
     ApiResponse<RoomResponse> getRoom(@PathVariable String roomId) {
-        return ApiResponse.<RoomResponse>builder()
-                .result(roomService.getRoom(roomId))
-                .build();
+        ApiResponse<RoomResponse> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(roomService.getRoom(roomId));
+        return apiResponse;
     }
 
     @PutMapping("/room/{roomId}")
     ApiResponse<RoomResponse> updateRoom(@PathVariable String roomId, @RequestBody @Valid CreateRoomRequest request) {
-        return ApiResponse.<RoomResponse>builder()
-                .result(roomService.updateRoom(roomId, request))
-                .build();
+        ApiResponse<RoomResponse> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(roomService.updateRoom(roomId, request));
+        return apiResponse;
     }
 
     @PatchMapping("/room/{roomId}/status")
     ApiResponse<RoomResponse> updateRoomStatus(@PathVariable String roomId, @RequestParam RoomStatus status) {
-        return ApiResponse.<RoomResponse>builder()
-                .result(roomService.updateRoomStatus(roomId, status))
-                .build();
+        ApiResponse<RoomResponse> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(roomService.updateRoomStatus(roomId, status));
+        return apiResponse;
     }
 
     @DeleteMapping("/room/{roomId}")
     ApiResponse<String> deleteRoom(@PathVariable String roomId) {
         roomService.deleteRoom(roomId);
-        return ApiResponse.<String>builder()
-                .result("Room has been deleted")
-                .build();
+        ApiResponse<String> apiResponse = new ApiResponse<>();
+        apiResponse.setResult("Room has been deleted");
+        return apiResponse;
     }
 
     @PostMapping("/room-type")
     ApiResponse<RoomTypeResponse> createRoomType(@RequestBody @Valid RoomTypeRequest request) {
-        return ApiResponse.<RoomTypeResponse>builder()
-                .result(roomService.createRoomType(request))
-                .build();
+        ApiResponse<RoomTypeResponse> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(roomService.createRoomType(request));
+        return apiResponse;
     }
 
     @GetMapping("/room-type")
     ApiResponse<List<RoomTypeResponse>> getRoomTypes() {
-        return ApiResponse.<List<RoomTypeResponse>>builder()
-                .result(roomService.getRoomTypes())
-                .build();
+        ApiResponse<List<RoomTypeResponse>> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(roomService.getRoomTypes());
+        return apiResponse;
     }
 
     @GetMapping("/room-type/{roomTypeId}")
     ApiResponse<RoomTypeResponse> getRoomType(@PathVariable String roomTypeId) {
-        return ApiResponse.<RoomTypeResponse>builder()
-                .result(roomService.getRoomType(roomTypeId))
-                .build();
+        ApiResponse<RoomTypeResponse> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(roomService.getRoomType(roomTypeId));
+        return apiResponse;
     }
 
     @PutMapping("/room-type/{roomTypeId}")
     ApiResponse<RoomTypeResponse> updateRoomType(@PathVariable String roomTypeId,
                                                  @RequestBody @Valid RoomTypeRequest request) {
-        return ApiResponse.<RoomTypeResponse>builder()
-                .result(roomService.updateRoomType(roomTypeId, request))
-                .build();
+        ApiResponse<RoomTypeResponse> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(roomService.updateRoomType(roomTypeId, request));
+        return apiResponse;
     }
 
     @DeleteMapping("/room-type/{roomTypeId}")
     ApiResponse<String> deleteRoomType(@PathVariable String roomTypeId) {
         roomService.deleteRoomType(roomTypeId);
-        return ApiResponse.<String>builder()
-                .result("Room type has been deleted")
-                .build();
+        ApiResponse<String> apiResponse = new ApiResponse<>();
+        apiResponse.setResult("Room type has been deleted");
+        return apiResponse;
     }
 }
