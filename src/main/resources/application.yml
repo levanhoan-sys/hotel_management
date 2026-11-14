@@ -1,0 +1,43 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: hotel-management-system
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema-deposit.sql
+      data-locations: classpath:data.sql
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:hotel_db}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    defer-datasource-initialization: true
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+app:
+  security:
+    access-token-secret: ${ACCESS_TOKEN_SECRET:local-development-only-token-secret-change-before-deploy-2026}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173}
+hotel:
+  payment:
+    bank:
+      bin: ${HOTEL_BANK_BIN:}
+      account-number: ${HOTEL_BANK_ACCOUNT:}
+      account-name: ${HOTEL_BANK_ACCOUNT_NAME:}
+  booking:
+    deposit-rate: 0.30
+    deposit-timeout-minutes: 15
+    check-in-time: "14:00"
+    timezone: Asia/Ho_Chi_Minh
+    cancellation-free-hours: 72
+    cancellation-partial-hours: 24
