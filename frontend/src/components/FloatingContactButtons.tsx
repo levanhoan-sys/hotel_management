@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import { Copy, PhoneCall, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog } from './ui/dialog'
+import { hotelContact } from '../config/hotelLocation'
 
-const configuredZaloUrl = import.meta.env.VITE_ZALO_PERSONAL_URL?.trim() ?? ''
-const configuredHotline = import.meta.env.VITE_HOTLINE_NUMBER?.trim() ?? ''
+const configuredZaloUrl = hotelContact.zaloUrl
+const configuredHotline = hotelContact.hotline
 
 function getZaloUrl(value: string): string | null {
   if (!value) return null

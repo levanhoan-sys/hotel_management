@@ -31,6 +31,20 @@ VITE_HOTLINE_NUMBER=+849xxxxxxxx
 
 To check Zalo manually, use the configured link in a laptop browser and on a phone with Zalo installed. Confirm the hotel page remains open after clicking; app handoff and whether the profile leads directly to a conversation depend on Zalo and the device.
 
+## Hotel location page
+
+The customer page is available at `/location`. Configure its public details in `frontend/.env`:
+
+```dotenv
+VITE_HOTEL_NAME=
+VITE_HOTEL_ADDRESS=
+VITE_HOTEL_LATITUDE=
+VITE_HOTEL_LONGITUDE=
+VITE_HOTEL_MAP_EMBED_URL=
+```
+
+Use the hotel's actual name, full address, and (optionally) verified coordinates. Coordinates must be decimal latitude/longitude; the page uses them first for directions and falls back to the configured address. To get the embed URL, open the hotel's place in Google Maps, choose **Share** → **Embed a map**, copy the iframe `src` URL, and paste that URL into `VITE_HOTEL_MAP_EMBED_URL`. The frontend accepts only HTTPS Google Maps `/maps/embed` URLs and does not need a Maps JavaScript API key. If no valid embed URL is configured, the page shows a placeholder; directions and address copying become available once their values are configured. The page reuses `VITE_HOTLINE_NUMBER` and `VITE_ZALO_PERSONAL_URL` used by the floating contact buttons.
+
 Production checks:
 
 ```powershell

@@ -10,6 +10,7 @@ const BookingPage = lazy(() => import('./pages/customer').then(m => ({ default: 
 const MyBookingsPage = lazy(() => import('./pages/customer').then(m => ({ default: m.MyBookingsPage })))
 const BookingDetailPage = lazy(() => import('./pages/customer').then(m => ({ default: m.BookingDetailPage })))
 const ProfilePage = lazy(() => import('./pages/customer').then(m => ({ default: m.ProfilePage })))
+const HotelLocationPage = lazy(() => import('./pages/customer-location').then(m => ({ default: m.HotelLocationPage })))
 const ReceptionHome = lazy(() => import('./pages/reception').then(m => ({ default: m.ReceptionHome })))
 const ReceptionPage = lazy(() => import('./pages/reception').then(m => ({ default: m.ReceptionPage })))
 const DepositVerificationPage = lazy(() => import('./pages/reception').then(m => ({ default: m.DepositVerificationPage })))
@@ -29,6 +30,7 @@ export default function App() {
     <Route element={<PublicLayout />}>
       <Route path="/" element={<HomePage />} />
       <Route path="/rooms" element={<RoomsPage />} />
+      <Route path="/location" element={<HotelLocationPage />} />
       <Route path="/rooms/:id" element={<RoomDetailPage />} />
       <Route path="/login" element={<AuthPage mode="login" />} />
       <Route path="/register" element={<AuthPage mode="register" />} />
