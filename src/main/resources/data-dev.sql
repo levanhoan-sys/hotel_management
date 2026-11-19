@@ -6,9 +6,7 @@ FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = 'demo.reception
 
 INSERT INTO users (username, password, full_name, email, phone, role, account_status, created_at, updated_at)
 SELECT 'demo.customer1', '$2a$10$rNBgylG6jffoxn2heRqQ6.bfuP4H5TjvZO/tgI0SUsp6Lwn2TqcdC', 'Demo Customer One', 'demo.customer1@hotel.local', '0900000002', 'ROLE_CUSTOMER', 'ACTIVE', NOW(), NOW()
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM users WHE
-
-                                     RE username = 'demo.customer1');
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = 'demo.customer1');
 
 INSERT INTO users (username, password, full_name, email, phone, role, account_status, created_at, updated_at)
 SELECT 'demo.customer2', '$2a$10$rNBgylG6jffoxn2heRqQ6.bfuP4H5TjvZO/tgI0SUsp6Lwn2TqcdC', 'Demo Customer Two', 'demo.customer2@hotel.local', '0900000003', 'ROLE_CUSTOMER', 'ACTIVE', NOW(), NOW()

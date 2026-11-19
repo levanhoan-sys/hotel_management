@@ -25,7 +25,7 @@ export function errorMessage(error: unknown, fallback = 'Đã có lỗi xảy ra
   if (axios.isAxiosError(error)) {
     const data: unknown = error.response?.data
     if (typeof data === 'object' && data !== null && 'message' in data && typeof data.message === 'string') return data.message
-    if (!error.response) return 'Không kết nối được máy chủ. Vui lòng kiểm tra backend và thử lại.'
+    if (!error.response) return 'Không thể kết nối tới hệ thống đặt phòng. Vui lòng thử lại sau.'
   }
   return error instanceof Error ? error.message : fallback
 }
