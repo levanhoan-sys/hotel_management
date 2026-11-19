@@ -16,10 +16,8 @@
 10. [Cơ sở dữ liệu](#10-cơ-sở-dữ-liệu)
 11. [REST API](#11-rest-api)
 12. [Screenshots](#12-screenshots)
-13. [Kiểm thử](#13-kiểm-thử)
-14. [Hạn chế hiện tại](#14-hạn-chế-hiện-tại)
-15. [Hướng phát triển](#15-hướng-phát-triển)
-16. [Thông tin dự án](#16-thông-tin-dự-án)
+13. [Hạn chế hiện tại](#13-hạn-chế-hiện-tại)
+14. [Hướng phát triển](#14-hướng-phát-triển)
 
 ## 1. Giới thiệu
 
