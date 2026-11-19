@@ -273,11 +273,7 @@ Recommendation nhận referenceRoomId hoặc roomTypeId, checkIn/checkOut, guest
 
 Swagger/OpenAPI UI chưa được cấu hình trong dependencies; matcher bảo mật cho Swagger không có nghĩa endpoint Swagger đang tồn tại. Request/response chi tiết: [frontend/API_CONTRACT.md](frontend/API_CONTRACT.md); các gap được ghi tại [frontend/API_GAPS.md](frontend/API_GAPS.md).
 
-## 12. Screenshots
-
-Repository hiện không chứa ảnh chụp giao diện sản phẩm. Có thể bổ sung ảnh thật sau khi chạy hệ thống: trang chủ, danh sách/chi tiết phòng, đặt phòng và QR, dashboard lễ tân, vị trí và gợi ý. README không tạo liên kết ảnh giả.
-
-## 13. Kiểm thử
+## 12. Kiểm thử
 
 Backend:
 
@@ -293,7 +289,7 @@ Backend có unit tests cho service và integration test Spring Boot cho đặt p
 
 Trong lần cập nhật README này không chạy lại test suite; không công bố coverage hay tỷ lệ pass.
 
-## 14. Hạn chế hiện tại
+## 13. Hạn chế hiện tại
 
 - Tiền cọc được xác minh thủ công bởi lễ tân; chưa có webhook ngân hàng. Ảnh QR được tải từ dịch vụ VietQR ngoài.
 - Hoàn tiền do nhân viên xử lý; không có tích hợp chuyển tiền hoàn tự động.
@@ -303,17 +299,10 @@ Trong lần cập nhật README này không chạy lại test suite; không côn
 - Không có migration versioning, thông báo email/SMS, hoặc bộ test end-to-end trình duyệt.
 - Một số tài liệu API/UML cũ có thể chưa đồng bộ source; controller và DTO là nguồn chuẩn.
 
-## 15. Hướng phát triển
+## 14. Hướng phát triển
 
 - Tích hợp gateway/ngân hàng với webhook xác thực và đối soát tự động.
 - Tích hợp hoàn tiền thật, email/SMS và cơ chế retry.
 - Hoàn thiện Admin, cấp tài khoản và phân quyền chi tiết.
 - Bổ sung migration versioning, observability, deployment production và E2E tests.
 - Bổ sung đánh giá, báo cáo doanh thu và hiệu chỉnh trọng số recommendation.
-
-## 16. Thông tin dự án
-
-- **Mục đích:** học tập/đồ án môn Lập trình hướng đối tượng Java.
-- **Repository:** [levanhoan-sys/hotel_management](https://github.com/levanhoan-sys/hotel_management)
-- **Tác giả/nhóm:** chưa có thông tin xác minh trong repository.
-- **License:** không tìm thấy file LICENSE; quyền sử dụng/phân phối chưa được xác định trong tài liệu.
