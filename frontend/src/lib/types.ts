@@ -5,6 +5,7 @@ export type ApiResponse<T> = { success: boolean; message: string; data: T; times
 export type AuthUser = { token: string; userId: number; username: string; fullName: string; email: string; role: Role }
 export type Profile = { id: number; username: string; fullName: string; email: string; phone: string | null; role: Role; accountStatus: 'ACTIVE' | 'LOCKED' }
 export type Room = { id: number; roomNumber: string; floor: number; status: RoomStatus; operational: boolean; roomTypeName: string; basePrice: number; capacity: number; description: string | null; imageUrl: string | null; areaSqm?: number | null; amenities?: string | null; services?: ServiceItem[] }
+export type RoomRecommendation = { room: Room; score: number; priceDifference: number; availableQuantity: number | null; availabilityChecked: boolean }
 export type RoomType = { id: number; name: string; basePrice: number; capacity: number; description: string | null; imageUrl: string | null; areaSqm: number | null; amenities: string | null }
 export type RoomDay = { date: string; status: 'AVAILABLE' | 'BOOKED' | 'BLOCKED' | 'UNAVAILABLE' }
 export type BookingRoom = { roomId: number; roomNumber: string; guestCount: number; capacity: number; pricePerNight: number; bookingRoomId?: number }

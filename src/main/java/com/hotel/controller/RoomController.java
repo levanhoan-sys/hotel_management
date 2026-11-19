@@ -21,6 +21,7 @@ import java.util.List;
 public class RoomController {
 
     private final RoomService roomService;
+    private final com.hotel.service.impl.RoomRecommendationService recommendationService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<RoomResponse>> createRoom(@Valid @RequestBody CreateRoomRequest request) {
@@ -45,6 +46,20 @@ public class RoomController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<RoomResponse>> getRoomById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.ok(roomService.getRoomById(id)));
+    }
+
+    @GetMapping("/recommendations")
+    public ResponseEntity<ApiResponse<List<com.hotel.dto.response.RoomRecommendationResponse>>> recommendations(
+            @RequestParam(required = false) Long referenceRoomId,
+            @RequestParam(required = false) Long roomTypeId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkIn,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOut,
+            @RequestParam(required = false) Integer guests,
+            @RequestParam(required = false, defaultValue = "1") Integer roomQuantity,
+            @RequestParam(required = false, defaultValue = "false") boolean alternatives,
+            @RequestParam(required = false, defaultValue = "4") Integer limit) {
+        return ResponseEntity.ok(ApiResponse.ok(recommendationService.recommend(referenceRoomId, roomTypeId,
+                checkIn, checkOut, guests, roomQuantity, alternatives, limit)));
     }
 
     @GetMapping("/{id}/calendar")
