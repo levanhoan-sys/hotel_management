@@ -1,16 +1,17 @@
 package com.hotel.strategy.pricing;
 
 import org.springframework.stereotype.Component;
+import com.hotel.service.PricingRateService;
 
 @Component("WEEKEND")
 public class WeekendPricing implements PricingStrategy {
 
-    // Phụ thu cuối tuần 20%
-    private static final double WEEKEND_SURCHARGE_RATE = 1.20;
+    private final PricingRateService rates;
+    public WeekendPricing(PricingRateService rates) { this.rates = rates; }
 
     @Override
     public double computePrice(double basePrice, int numberOfNights) {
-        return (basePrice * WEEKEND_SURCHARGE_RATE) * numberOfNights;
+        return (basePrice * rates.multiplier("WEEKEND").doubleValue()) * numberOfNights;
     }
 
     @Override

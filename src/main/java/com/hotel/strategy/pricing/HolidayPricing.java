@@ -1,16 +1,17 @@
 package com.hotel.strategy.pricing;
 
 import org.springframework.stereotype.Component;
+import com.hotel.service.PricingRateService;
 
 @Component("HOLIDAY")
 public class HolidayPricing implements PricingStrategy {
 
-    // Phụ thu dịp lễ Tết 50%
-    private static final double HOLIDAY_SURCHARGE_RATE = 1.50;
+    private final PricingRateService rates;
+    public HolidayPricing(PricingRateService rates) { this.rates = rates; }
 
     @Override
     public double computePrice(double basePrice, int numberOfNights) {
-        return (basePrice * HOLIDAY_SURCHARGE_RATE) * numberOfNights;
+        return (basePrice * rates.multiplier("HOLIDAY").doubleValue()) * numberOfNights;
     }
 
     @Override

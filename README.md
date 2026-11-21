@@ -156,7 +156,7 @@ macOS/Linux: export các biến tương ứng rồi chạy:
 
     ./mvnw spring-boot:run
 
-Backend mặc định chạy tại http://localhost:8080. Để tạo lễ tân ban đầu, đặt APP_BOOTSTRAP_RECEPTIONIST_USERNAME và APP_BOOTSTRAP_RECEPTIONIST_PASSWORD trước khi khởi động. Tài khoản chỉ được tạo nếu username chưa tồn tại; khách có thể tự đăng ký.
+Backend mặc định chạy tại http://localhost:8080. Để tạo tài khoản quản trị đầu tiên, đặt APP_BOOTSTRAP_ADMIN_USERNAME và APP_BOOTSTRAP_ADMIN_PASSWORD trước khi khởi động. Tài khoản chỉ được tạo nếu username chưa tồn tại. Có thể dùng APP_BOOTSTRAP_RECEPTIONIST_USERNAME và APP_BOOTSTRAP_RECEPTIONIST_PASSWORD để tạo lễ tân ban đầu; khách có thể tự đăng ký.
 
 ### 7.3 Chạy frontend
 
@@ -190,6 +190,8 @@ Giá trị mặc định xem trong src/main/resources/application.yml.
 | HOTEL_BANK_ACCOUNT_NAME | Tùy chọn local | Tên chủ tài khoản |
 | APP_BOOTSTRAP_RECEPTIONIST_USERNAME | Không | Username lễ tân đầu tiên |
 | APP_BOOTSTRAP_RECEPTIONIST_PASSWORD | Không | Mật khẩu khởi tạo, mã hóa BCrypt |
+| APP_BOOTSTRAP_ADMIN_USERNAME | Không | Username quản trị viên đầu tiên |
+| APP_BOOTSTRAP_ADMIN_PASSWORD | Không | Mật khẩu quản trị viên khởi tạo, mã hóa BCrypt |
 | SPRING_PROFILES_ACTIVE | Không | Đặt dev để nạp dữ liệu demo |
 
 Ba biến cấu hình ngân hàng để trống cùng lúc cho phép backend khởi động local nhưng QR không hoạt động; cấu hình dở dang/sai định dạng làm ứng dụng lỗi khởi động. Giá trị nghiệp vụ nằm trong YAML: cọc 30%, giữ phòng 15 phút, giờ check-in 14:00, Asia/Ho_Chi_Minh, mốc miễn phí hủy 72 giờ và mốc một phần 24 giờ. Các giá trị này không có env override trong source hiện tại.
