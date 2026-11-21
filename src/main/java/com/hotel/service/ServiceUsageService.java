@@ -18,5 +18,8 @@ public interface ServiceUsageService {
     ServiceUsageResponse addUsage(Long bookingId, CreateServiceUsageRequest request);
     ServiceUsageResponse addLegacyUsage(Long bookingId, AddServiceOrderRequest request);
     List<ServiceUsageResponse> getUsages(Long bookingId);
+    List<ServiceUsageResponse> getPendingUsages();
+    ServiceUsageResponse approveUsage(Long usageId);
+    ServiceUsageResponse rejectUsage(Long usageId);
     ServiceUsageResponse cancelUsage(Long usageId, CancelServiceUsageRequest request);
 }

@@ -24,6 +24,21 @@ public class ServiceUsageController {
         return ApiResponse.ok(usages.getUsages(bookingId));
     }
 
+    @GetMapping("/service-usages/pending")
+    public ApiResponse<List<ServiceUsageResponse>> pending() {
+        return ApiResponse.ok(usages.getPendingUsages());
+    }
+
+    @PatchMapping("/service-usages/{usageId}/approve")
+    public ApiResponse<ServiceUsageResponse> approve(@PathVariable Long usageId) {
+        return ApiResponse.ok(usages.approveUsage(usageId), "Yêu cầu dịch vụ đã được duyệt");
+    }
+
+    @PatchMapping("/service-usages/{usageId}/reject")
+    public ApiResponse<ServiceUsageResponse> reject(@PathVariable Long usageId) {
+        return ApiResponse.ok(usages.rejectUsage(usageId), "Yêu cầu dịch vụ đã bị từ chối");
+    }
+
     @PostMapping("/bookings/{bookingId}/service-usages")
     public ResponseEntity<ApiResponse<ServiceUsageResponse>> create(@PathVariable Long bookingId,
             @Valid @RequestBody CreateServiceUsageRequest request) {

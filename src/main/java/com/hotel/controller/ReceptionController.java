@@ -36,7 +36,7 @@ public class ReceptionController {
             @PathVariable Long bookingId,
             @Valid @RequestBody AddServiceOrderRequest request) {
         BookingResponse response = receptionService.addServiceToBooking(bookingId, request);
-        return ResponseEntity.ok(ApiResponse.ok(response, "Service order added to booking successfully"));
+        return ResponseEntity.ok(ApiResponse.ok(response, "Yêu cầu dịch vụ đã được gửi, chờ lễ tân duyệt"));
     }
 
     @PatchMapping("/rooms/{roomId}/cleaned")

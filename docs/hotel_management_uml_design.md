@@ -26,17 +26,14 @@ Dự án xây dựng một ứng dụng web quản lý khách sạn đáp ứng 
    * Lớp người dùng cơ sở `User` được kế thừa bởi `Customer` và `Employee`.
    * Lớp `Employee` tiếp tục được kế thừa bởi `Receptionist` và `Admin`.
 3. **Tính đa hình (Polymorphism):**
-   * Đa hình qua Interface: Lớp `Invoice` gọi `PaymentStrategy.pay()` mà không cần phụ thuộc vào kiểu thanh toán cụ thể (`CashPayment`, `CreditCardPayment`, `VNPayPayment`).
-   * Đa hình qua tính giá: `PricingStrategy.computePrice()` được triển khai khác nhau cho `StandardPricing`, `WeekendPricing`, `HolidayPricing`.
+   * `PricingStrategy.computePrice()` được triển khai cho giá tiêu chuẩn, cuối tuần và ngày lễ.
+   * Thanh toán hiện được kiểm tra và ghi nhận trong `InvoiceServiceImpl`; dự án không sử dụng payment strategy/gateway giả lập.
 4. **Tính trừu tượng (Abstraction):**
-   * Trừu tượng hóa qua các Abstract Classes (`User`, `Employee`) và Interfaces (`PricingStrategy`, `PaymentStrategy`, `NotificationService`). Ẩn đi chi tiết cài đặt, chỉ cung cấp bộ khung giao tiếp.
+   * Trừu tượng hóa qua các lớp người dùng cơ sở (`User`, `Employee`) và interface `PricingStrategy`.
 
 ### 2.2. Design Patterns áp dụng
-* **Strategy Pattern:** Áp dụng cho:
-  * Thuật toán tính giá phòng theo mùa / ngày lễ / ngày thường.
-  * Các hình thức thanh toán hóa đơn linh hoạt (Tiền mặt, Thẻ ngân hàng, Ví điện tử).
-* **Builder Pattern:** Dùng để khởi tạo các đối tượng phức tạp như `Booking` và `Invoice` nhằm tăng tính dễ đọc và bảo trì mã nguồn.
-* **Factory Pattern:** Sử dụng để khởi tạo chiến lược giá hoặc phương thức thanh toán phù hợp dựa trên tham số đầu vào.
+* **Strategy Pattern:** Áp dụng cho thuật toán tính giá ngày thường/cuối tuần/ngày lễ.
+* **Factory Pattern:** `PricingStrategyFactory` chọn chiến lược giá. Thanh toán không dùng Strategy/Factory; backend chỉ ghi nhận phương thức được hỗ trợ trong `InvoiceServiceImpl`.
 
 ---
 
@@ -245,37 +242,16 @@ classDiagram
         -double tax
         -double discount
         -double totalAmount
-        -PaymentStrategy paymentStrategy
-        +generatePdf() byte[]
-        +processPayment() boolean
+        -InvoiceStatus status
+        -List<Payment> payments
     }
 
-    %% ---------------- PAYMENT (STRATEGY PATTERN) ----------------
-    class PaymentStrategy {
-        <<interface>>
-        +pay(double amount) boolean
+    class Payment {
+        -BigDecimal amount
+        -PaymentMethod method
+        -PaymentStatus status
+        -String reference
     }
-
-    class CashPayment {
-        -double cashTendered
-        +pay(double amount) boolean
-    }
-
-    class CreditCardPayment {
-        -String cardNumber
-        -String cardHolder
-        -String cvv
-        +pay(double amount) boolean
-    }
-
-    class VNPayPayment {
-        -String transactionId
-        +pay(double amount) boolean
-    }
-
-    PaymentStrategy <|.. CashPayment
-    PaymentStrategy <|.. CreditCardPayment
-    PaymentStrategy <|.. VNPayPayment
 
     %% Relationships
     Customer "1" --> "*" Booking : creates
@@ -284,7 +260,7 @@ classDiagram
     Booking "1" *-- "*" ServiceOrder : contains
     ServiceOrder "*" --> "1" ServiceItem : orders
     Invoice "1" --> "1" Booking : settles
-    Invoice --> PaymentStrategy : processes via
+    Invoice "1" --> "*" Payment : records
 ```
 
 ---
@@ -292,41 +268,31 @@ classDiagram
 ## 5. SƠ ĐỒ TUẦN TỰ (SEQUENCE DIAGRAM)
 ### Luồng nghiệp vụ: Check-out và Thanh toán hóa đơn
 
-Mô hình hóa sự tương tác giữa các tầng kiến trúc Spring Boot: Controller $\rightarrow$ Service $\rightarrow$ Strategy $\rightarrow$ Repository.
+Mô hình hóa việc lễ tân ghi nhận khoản thanh toán hóa đơn. Backend không gọi cổng thẻ/VNPay; chỉ nhận CASH hoặc BANK_TRANSFER được xác minh thủ công.
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Rec as Lễ tân (Receptionist)
-    participant Ctrl as BookingController
-    participant Svc as CheckOutService
-    participant BRepo as BookingRepository
-    participant RRepo as RoomRepository
-    participant Pay as PaymentStrategy (VNPay/Cash)
+    participant Ctrl as InvoiceManagementController
+    participant Svc as InvoiceServiceImpl
     participant IRepo as InvoiceRepository
+    participant PRepo as PaymentRepository
 
-    Rec ->> Ctrl: Gửi yêu cầu Check-out (bookingId, paymentMethod)
-    Ctrl ->> Svc: processCheckOut(bookingId, paymentMethod)
-    
-    Svc ->> BRepo: findById(bookingId)
-    BRepo -->> Svc: Trả về Booking entity
-    
-    Svc ->> Svc: calculateTotal() (Tiền phòng + Tiền dịch vụ phát sinh)
-    
-    Svc ->> Pay: pay(totalAmount)
-    Pay -->> Svc: Thanh toán thành công (true)
-    
-    Svc ->> Svc: Tạo đối tượng Invoice (Status: PAID)
-    Svc ->> IRepo: save(invoice)
-    
-    loop Cập nhật từng phòng trong Booking
-        Svc ->> RRepo: updateStatus(room.id, RoomStatus.CLEANING)
+    Rec ->> Ctrl: Ghi nhận khoản thanh toán (invoiceId, method, amount)
+    Ctrl ->> Svc: recordPayment(invoiceId, request)
+    Svc ->> IRepo: Khóa và đọc hóa đơn
+    IRepo -->> Svc: Hóa đơn
+    Svc ->> Svc: Kiểm tra trạng thái, số dư, phương thức và idempotency key
+    alt CASH hoặc BANK_TRANSFER hợp lệ
+        Svc ->> PRepo: Lưu Payment
+        Svc ->> IRepo: Cập nhật tổng thanh toán/trạng thái
+        Svc -->> Ctrl: PaymentResponse
+        Ctrl -->> Rec: Hiển thị kết quả ghi nhận
+    else Phương thức không hỗ trợ hoặc dữ liệu không hợp lệ
+        Svc -->> Ctrl: Trả lỗi nghiệp vụ
+        Ctrl -->> Rec: Hiển thị lỗi
     end
-    
-    Svc ->> BRepo: updateStatus(booking.id, BookingStatus.CHECKED_OUT)
-    
-    Svc -->> Ctrl: Trả về InvoiceDTO
-    Ctrl -->> Rec: Hiển thị hóa đơn thanh toán thành công & Link in PDF
 ```
 
 ---
@@ -350,7 +316,7 @@ stateDiagram-v2
 
 ## 7. CẤU TRÚC DỰ ÁN CHI TIẾT THEO CÁC TẦNG (LAYERED ARCHITECTURE)
 
-Dự án tuân thủ nghiêm ngặt mô hình kiến trúc nhiều tầng (Layered Architecture): `Controller` $\rightarrow$ `Service` $\rightarrow$ `Repository` $\rightarrow$ `Database`, đồng thời tách biệt rõ ràng các tầng `dto`, `entity`, `enums`, `exception`, `config`, `strategy`, `builder`.
+Dự án tổ chức theo các tầng `Controller` → `Service` → `Repository` → `Database`, đồng thời tách biệt các gói `dto`, `entity`, `enums`, `exception`, `config` và `strategy/pricing`.
 
 ```text
 hotel-management-system/
@@ -395,26 +361,16 @@ hotel-management-system/
 │   │   │   │   ├── ServiceItemRepository.java
 │   │   │   │   └── InvoiceRepository.java
 │   │   │   │
-│   │   │   ├── strategy/                   # Tầng Hiện thực Strategy Pattern (Đa hình OOP)
+│   │   │   ├── strategy/                   # Chiến lược tính giá
 │   │   │   │   ├── pricing/                 # Chiến lược tính giá phòng
 │   │   │   │   │   ├── PricingStrategy.java
 │   │   │   │   │   ├── StandardPricing.java
 │   │   │   │   │   ├── WeekendPricing.java
 │   │   │   │   │   ├── HolidayPricing.java
 │   │   │   │   │   └── PricingStrategyFactory.java
-│   │   │   │   └── payment/                 # Chiến lược thanh toán
-│   │   │   │       ├── PaymentStrategy.java
-│   │   │   │       ├── CashPayment.java
-│   │   │   │       ├── CreditCardPayment.java
-│   │   │   │       ├── VNPayPayment.java
-│   │   │   │       └── PaymentStrategyFactory.java
-│   │   │   │
-│   │   │   ├── builder/                    # Tầng Hiện thực Builder Pattern
-│   │   │   │   └── BookingBuilder.java      # Khởi tạo đối tượng Booking phức tạp
-│   │   │   │
 │   │   │   ├── dto/                        # Tầng DTO (Data Transfer Object)
 │   │   │   │   ├── request/
-│   │   │   │   │   ├── LoginRequest.java
+│   │   │   │   │   ├── AuthRequest.java
 │   │   │   │   │   ├── RegisterCustomerRequest.java
 │   │   │   │   │   ├── CreateRoomRequest.java
 │   │   │   │   │   ├── BookingRequest.java
@@ -471,12 +427,10 @@ hotel-management-system/
    * Phụ trách `RoomController`, `RoomService` và thuật toán tra cứu phòng trống.
 
 3. **Thành viên 3:**
-   * Phụ trách tầng `builder/BookingBuilder.java`.
-   * Phụ trách `Booking`, `BookingDetail`, `BookingRepository`.
+   * Phụ trách `Booking`, `BookingDetail`, `BookingRepository` và service đặt phòng.
    * Phụ trách `BookingController`, `BookingService` và thuật toán kiểm tra xung đột lịch đặt (Overbooking Prevention).
 
 4. **Thành viên 4:**
    * Phụ trách dịch vụ và hóa đơn: `ServiceItem`, `ServiceOrder`, `Invoice`.
-   * Phụ trách tầng `strategy/payment/` (`CashPayment`, `CreditCardPayment`, `VNPayPayment`).
-   * Phụ trách `ReceptionController`, `InvoiceController`, `ReceptionService`, `InvoiceService`.
+   * Phụ trách quy trình ghi nhận thanh toán thủ công cùng nghiệp vụ lễ tân/hóa đơn.
 

@@ -24,6 +24,7 @@ import com.hotel.repository.BookingRepository;
 import com.hotel.repository.InvoiceRepository;
 import com.hotel.repository.PaymentRepository;
 import com.hotel.repository.RoomRepository;
+import com.hotel.repository.ServiceOrderRepository;
 import com.hotel.service.InvoiceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -46,6 +47,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final InvoiceRepository invoiceRepository;
     private final PaymentRepository paymentRepository;
     private final RoomRepository roomRepository;
+    private final ServiceOrderRepository serviceOrderRepository;
 
     @Override
     @Transactional
@@ -95,7 +97,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         }
 
         for (ServiceOrder usage : booking.getServiceOrders()) {
-            if (usage.isCancelled()) continue;
+            if (usage.isCancelled() || usage.getApprovalStatus() != com.hotel.enums.ServiceOrderStatus.APPROVED) continue;
             BigDecimal unitPrice = money(BigDecimal.valueOf(usage.getUnitPrice()));
             BigDecimal quantity = BigDecimal.valueOf(usage.getQuantity());
             BigDecimal lineTotal = money(unitPrice.multiply(quantity));
@@ -124,7 +126,9 @@ public class InvoiceServiceImpl implements InvoiceService {
     public InvoiceResponse issueInvoice(Long invoiceId) {
         Invoice current = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
-        lockCheckedInBooking(current.getBooking().getId());
+        Booking booking = lockCheckedInBooking(current.getBooking().getId());
+        if (serviceOrderRepository.existsByBookingIdAndApprovalStatus(booking.getId(), com.hotel.enums.ServiceOrderStatus.PENDING))
+            throw new ConflictException("Pending service requests must be reviewed before issuing the invoice");
         Invoice invoice = invoiceRepository.findByIdForUpdate(invoiceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
         if (invoice.getStatus() != InvoiceStatus.DRAFT) throw new ConflictException("Invoice is already issued");

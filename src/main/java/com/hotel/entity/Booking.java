@@ -201,7 +201,7 @@ public class Booking extends BaseEntity {
 
     public double calculateTotalServiceCharge() {
         return serviceOrders.stream()
-                .filter(order -> !order.isCancelled())
+                .filter(order -> !order.isCancelled() && order.getApprovalStatus() == com.hotel.enums.ServiceOrderStatus.APPROVED)
                 .mapToDouble(ServiceOrder::getSubTotal)
                 .sum();
     }

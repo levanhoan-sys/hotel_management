@@ -12,6 +12,7 @@ import com.hotel.entity.BookingDetail;
 import com.hotel.entity.ServiceItem;
 import com.hotel.entity.ServiceOrder;
 import com.hotel.enums.BookingStatus;
+import com.hotel.enums.ServiceOrderStatus;
 import com.hotel.exception.BadRequestException;
 import com.hotel.exception.ConflictException;
 import com.hotel.exception.ResourceNotFoundException;
@@ -97,12 +98,12 @@ public class ServiceUsageServiceImpl implements ServiceUsageService {
                 throw new BadRequestException("bookingRoomId is required when a booking contains multiple rooms");
             detailId = booking.getDetails().getFirst().getId();
         }
-        return createUsage(booking, detailId, request.getServiceItemId(), request.getQuantity());
+        return createUsage(booking, detailId, request.getServiceItemId(), request.getQuantity(), ServiceOrderStatus.PENDING);
     }
 
     private ServiceUsageResponse addUsageInternal(Long bookingId, Long bookingRoomId, Long serviceItemId, int quantity) {
         Booking booking = lockCheckedInBooking(bookingId);
-        return createUsage(booking, bookingRoomId, serviceItemId, quantity);
+        return createUsage(booking, bookingRoomId, serviceItemId, quantity, ServiceOrderStatus.APPROVED);
     }
 
     private Booking lockCheckedInBooking(Long bookingId) {
@@ -115,7 +116,8 @@ public class ServiceUsageServiceImpl implements ServiceUsageService {
         return booking;
     }
 
-    private ServiceUsageResponse createUsage(Booking booking, Long bookingRoomId, Long serviceItemId, int quantity) {
+    private ServiceUsageResponse createUsage(Booking booking, Long bookingRoomId, Long serviceItemId, int quantity,
+                                             ServiceOrderStatus approvalStatus) {
         if (bookingRoomId == null) throw new BadRequestException("A booking room is required for service usage");
         if (quantity <= 0) throw new BadRequestException("Quantity must be greater than zero");
         BookingDetail detail = booking.getDetails().stream().filter(d -> d.getId().equals(bookingRoomId)).findFirst()
@@ -124,11 +126,12 @@ public class ServiceUsageServiceImpl implements ServiceUsageService {
                 .orElseThrow(() -> new ResourceNotFoundException("Service not found"));
         if (!service.isActive()) throw new BadRequestException("Service is not currently available");
         boolean offeredForRoom = detail.getRoom().getServices().stream().anyMatch(item -> item.getId().equals(serviceItemId));
-        if (!offeredForRoom) throw new BadRequestException("Service is not offered for this room");
-        ServiceOrder usage = new ServiceOrder(booking, detail, service, quantity);
+        if (approvalStatus == ServiceOrderStatus.PENDING && !offeredForRoom)
+            throw new BadRequestException("Service is not offered for this room");
+        ServiceOrder usage = new ServiceOrder(booking, detail, service, quantity, approvalStatus);
         ServiceOrder saved = usages.save(usage);
         booking.getServiceOrders().add(saved);
-        refreshDraftInvoice(booking.getId());
+        if (approvalStatus == ServiceOrderStatus.APPROVED) refreshDraftInvoice(booking.getId());
         return ServiceUsageResponse.from(saved);
     }
 
@@ -140,11 +143,43 @@ public class ServiceUsageServiceImpl implements ServiceUsageService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<ServiceUsageResponse> getPendingUsages() {
+        return usages.findByApprovalStatusOrderByOrderedAtAsc(ServiceOrderStatus.PENDING).stream()
+                .map(ServiceUsageResponse::from).toList();
+    }
+
+    @Override
+    @Transactional
+    public ServiceUsageResponse approveUsage(Long usageId) {
+        ServiceOrder usage = usages.findByIdForUpdate(usageId).orElseThrow(() -> new ResourceNotFoundException("Service usage not found"));
+        Booking booking = lockCheckedInBooking(usage.getBooking().getId());
+        if (usage.getApprovalStatus() != ServiceOrderStatus.PENDING)
+            throw new ConflictException("Only pending service requests can be approved");
+        usage.approve();
+        refreshDraftInvoice(booking.getId());
+        return ServiceUsageResponse.from(usage);
+    }
+
+    @Override
+    @Transactional
+    public ServiceUsageResponse rejectUsage(Long usageId) {
+        ServiceOrder usage = usages.findByIdForUpdate(usageId).orElseThrow(() -> new ResourceNotFoundException("Service usage not found"));
+        lockCheckedInBooking(usage.getBooking().getId());
+        if (usage.getApprovalStatus() != ServiceOrderStatus.PENDING)
+            throw new ConflictException("Only pending service requests can be rejected");
+        usage.reject();
+        return ServiceUsageResponse.from(usage);
+    }
+
+    @Override
     @Transactional
     public ServiceUsageResponse cancelUsage(Long usageId, CancelServiceUsageRequest request) {
-        ServiceOrder usage = usages.findById(usageId).orElseThrow(() -> new ResourceNotFoundException("Service usage not found"));
+        ServiceOrder usage = usages.findByIdForUpdate(usageId).orElseThrow(() -> new ResourceNotFoundException("Service usage not found"));
         Booking booking = lockCheckedInBooking(usage.getBooking().getId());
         if (usage.isCancelled()) throw new ConflictException("Service usage is already cancelled");
+        if (usage.getApprovalStatus() != ServiceOrderStatus.APPROVED)
+            throw new ConflictException("Only approved service usage can be cancelled");
         usage.cancel(request == null ? null : clean(request.reason()));
         refreshDraftInvoice(booking.getId());
         return ServiceUsageResponse.from(usage);

@@ -8,11 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import java.math.BigDecimal;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 
 @RestController
 @RequestMapping("/api/bookings/{bookingId}/deposit")
@@ -44,5 +39,4 @@ public class DepositController {
 
     public record PaymentStartRequest(@Size(max = 100) String idempotencyKey) { }
 
-    public record ConfirmationRequest(@NotNull @Positive BigDecimal actualReceivedAmount, @NotBlank @Size(max = 255) String transactionReference) { }
 }

@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+import com.hotel.enums.ServiceOrderStatus;
 
 import java.time.LocalDateTime;
 
@@ -53,11 +54,21 @@ public class ServiceOrder extends BaseEntity {
     @Column(name = "ordered_at")
     private LocalDateTime orderedAt = LocalDateTime.now();
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "approval_status", nullable = false)
+    @ColumnDefault("'APPROVED'")
+    private ServiceOrderStatus approvalStatus = ServiceOrderStatus.APPROVED;
+
     public ServiceOrder(Booking booking, ServiceItem serviceItem, int quantity) {
         this(booking, null, serviceItem, quantity);
     }
 
     public ServiceOrder(Booking booking, BookingDetail bookingDetail, ServiceItem serviceItem, int quantity) {
+        this(booking, bookingDetail, serviceItem, quantity, ServiceOrderStatus.APPROVED);
+    }
+
+    public ServiceOrder(Booking booking, BookingDetail bookingDetail, ServiceItem serviceItem, int quantity,
+                        ServiceOrderStatus approvalStatus) {
         this.booking = booking;
         this.bookingDetail = bookingDetail;
         this.serviceItem = serviceItem;
@@ -65,6 +76,17 @@ public class ServiceOrder extends BaseEntity {
         this.unitPrice = serviceItem.getUnitPrice();
         this.subTotal = unitPrice * quantity;
         this.orderedAt = LocalDateTime.now();
+        this.approvalStatus = approvalStatus;
+    }
+
+    public void approve() {
+        if (approvalStatus != ServiceOrderStatus.PENDING) throw new IllegalStateException("Only pending service requests can be approved");
+        approvalStatus = ServiceOrderStatus.APPROVED;
+    }
+
+    public void reject() {
+        if (approvalStatus != ServiceOrderStatus.PENDING) throw new IllegalStateException("Only pending service requests can be rejected");
+        approvalStatus = ServiceOrderStatus.REJECTED;
     }
 
     public void cancel(String reason) {

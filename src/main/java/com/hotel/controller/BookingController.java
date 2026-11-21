@@ -64,7 +64,7 @@ public class BookingController {
     @PostMapping("/{id}/services")
     public ResponseEntity<ApiResponse<BookingResponse>> addService(@PathVariable Long id, @Valid @RequestBody AddServiceOrderRequest request, Authentication authentication) {
         ensureOwnerOrStaff(bookingService.getBookingById(id), authentication);
-        return ResponseEntity.ok(ApiResponse.ok(receptionService.addServiceToBooking(id, request), "Đã thêm dịch vụ vào đặt phòng"));
+        return ResponseEntity.ok(ApiResponse.ok(receptionService.addServiceToBooking(id, request), "Yêu cầu dịch vụ đã được gửi, chờ lễ tân duyệt"));
     }
 
     @GetMapping("/customer/{customerId}")

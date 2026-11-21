@@ -2,6 +2,7 @@ package com.hotel.dto.response;
 
 import com.hotel.entity.Booking;
 import com.hotel.enums.BookingStatus;
+import com.hotel.enums.ServiceOrderStatus;
 import lombok.Builder;
 import lombok.Data;
 
@@ -56,7 +57,7 @@ public class BookingResponse {
                 o.getServiceItem().getName(), o.getQuantity(), o.getServiceItem().getUnit(), o.getSubTotal(),
                 o.getId(), o.getBookingDetail() == null ? null : o.getBookingDetail().getId(),
                 o.getBookingDetail() == null ? null : o.getBookingDetail().getRoom().getRoomNumber(),
-                o.getUnitPrice(), o.isCancelled(), o.getOrderedAt(), o.getCancelledAt(), o.getCancellationReason())).toList();
+                o.getUnitPrice(), o.getApprovalStatus(), o.isCancelled(), o.getOrderedAt(), o.getCancelledAt(), o.getCancellationReason())).toList();
 
         double roomCharge = booking.calculateTotalRoomCharge();
         double serviceCharge = booking.calculateTotalServiceCharge();
@@ -99,6 +100,6 @@ public class BookingResponse {
 
     public record ServiceOrderResponse(String name, int quantity, String unit, double subTotal,
                                         Long id, Long bookingRoomId, String roomNumber, double unitPrice,
-                                        boolean cancelled, java.time.LocalDateTime orderedAt,
+                                        ServiceOrderStatus approvalStatus, boolean cancelled, java.time.LocalDateTime orderedAt,
                                         java.time.LocalDateTime cancelledAt, String cancellationReason) { }
 }
