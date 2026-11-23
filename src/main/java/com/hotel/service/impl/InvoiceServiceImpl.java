@@ -98,7 +98,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         for (ServiceOrder usage : booking.getServiceOrders()) {
             if (usage.isCancelled() || usage.getApprovalStatus() != com.hotel.enums.ServiceOrderStatus.APPROVED) continue;
-            BigDecimal unitPrice = money(BigDecimal.valueOf(usage.getUnitPrice()));
+            BigDecimal unitPrice = money(usage.getUnitPrice());
             BigDecimal quantity = BigDecimal.valueOf(usage.getQuantity());
             BigDecimal lineTotal = money(unitPrice.multiply(quantity));
             serviceTotal = serviceTotal.add(lineTotal);

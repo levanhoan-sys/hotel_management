@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.math.BigDecimal;
 
 @Getter
 @Setter
@@ -21,8 +22,15 @@ public class Receptionist extends Employee {
     private int deskNumber;
 
     public Receptionist(String username, String password, String fullName, String email, String phone,
-                        String employeeCode, Double salary, LocalDate hireDate, int deskNumber) {
+                        String employeeCode, BigDecimal salary, LocalDate hireDate, int deskNumber) {
         super(username, password, fullName, email, phone, RoleName.ROLE_RECEPTIONIST, employeeCode, salary, hireDate);
         this.deskNumber = deskNumber;
     }
+
+    public Receptionist(String username, String password, String fullName, String email, String phone,
+                        String employeeCode, Double salary, LocalDate hireDate, int deskNumber) {
+        super(username, password, fullName, email, phone, employeeCode, salary, hireDate);
+        this.deskNumber = deskNumber;
+    }
 }
+

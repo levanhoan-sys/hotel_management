@@ -4,11 +4,12 @@ import com.hotel.entity.ServiceOrder;
 import com.hotel.enums.ServiceOrderStatus;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 public record ServiceUsageResponse(Long id, Long bookingId, String bookingCode, String customerName,
                                    Long bookingRoomId, String roomNumber,
                                    Long serviceId, String serviceName, int quantity, String unit,
-                                   double unitPrice, double subTotal, LocalDateTime orderedAt,
+                                   BigDecimal unitPrice, BigDecimal subTotal, LocalDateTime orderedAt,
                                    ServiceOrderStatus approvalStatus, boolean cancelled,
                                    LocalDateTime cancelledAt, String cancellationReason) {
     public static ServiceUsageResponse from(ServiceOrder usage) {

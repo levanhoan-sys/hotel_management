@@ -24,6 +24,6 @@ public class AdminBootstrap implements CommandLineRunner {
         if (username.isBlank() || password.isBlank() || users.existsByUsername(username)) return;
         String code = ("ADMIN-" + username).substring(0, Math.min(30, username.length() + 6));
         users.save(new Admin(username.trim(), passwords.encode(password), "Quản trị viên", null, null,
-                code, null, LocalDate.now(), "ALL"));
+                code, (java.math.BigDecimal) null, LocalDate.now(), "ALL"));
     }
 }

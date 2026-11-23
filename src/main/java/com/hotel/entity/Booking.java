@@ -211,10 +211,14 @@ public class Booking extends BaseEntity {
         return calculateTotalRoomChargeBigDecimal().doubleValue();
     }
 
-    public double calculateTotalServiceCharge() {
+    public BigDecimal calculateTotalServiceChargeBigDecimal() {
         return serviceOrders.stream()
                 .filter(order -> !order.isCancelled() && order.getApprovalStatus() == com.hotel.enums.ServiceOrderStatus.APPROVED)
-                .mapToDouble(ServiceOrder::getSubTotal)
-                .sum();
+                .map(order -> order.getSubTotal() != null ? order.getSubTotal() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public double calculateTotalServiceCharge() {
+        return calculateTotalServiceChargeBigDecimal().doubleValue();
     }
 }

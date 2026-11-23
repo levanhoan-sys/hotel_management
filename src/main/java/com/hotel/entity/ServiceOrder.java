@@ -8,6 +8,8 @@ import org.hibernate.annotations.ColumnDefault;
 import com.hotel.enums.ServiceOrderStatus;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Getter
 @Setter
@@ -34,12 +36,12 @@ public class ServiceOrder extends BaseEntity {
     @Column(nullable = false)
     private int quantity;
 
-    @Column(name = "sub_total", nullable = false)
-    private double subTotal;
+    @Column(name = "sub_total", nullable = false, precision = 15, scale = 2)
+    private BigDecimal subTotal;
 
     @ColumnDefault("0.00")
-    @Column(name = "unit_price", nullable = false)
-    private double unitPrice;
+    @Column(name = "unit_price", nullable = false, precision = 15, scale = 2)
+    private BigDecimal unitPrice;
 
     @ColumnDefault("false")
     @Column(name = "cancelled", nullable = false)
@@ -74,9 +76,17 @@ public class ServiceOrder extends BaseEntity {
         this.serviceItem = serviceItem;
         this.quantity = quantity;
         this.unitPrice = serviceItem.getUnitPrice();
-        this.subTotal = unitPrice * quantity;
+        this.subTotal = this.unitPrice != null ? this.unitPrice.multiply(BigDecimal.valueOf(quantity)).setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
         this.orderedAt = LocalDateTime.now();
         this.approvalStatus = approvalStatus;
+    }
+
+    public double getSubTotalDouble() {
+        return subTotal != null ? subTotal.doubleValue() : 0.0;
+    }
+
+    public double getUnitPriceDouble() {
+        return unitPrice != null ? unitPrice.doubleValue() : 0.0;
     }
 
     public void approve() {

@@ -5,9 +5,10 @@ import com.hotel.entity.Receptionist;
 import com.hotel.enums.AccountStatus;
 import com.hotel.enums.RoleName;
 import java.time.LocalDate;
+import java.math.BigDecimal;
 
 public record EmployeeResponse(Long id, String username, String fullName, String email, String phone,
-        String employeeCode, Double salary, LocalDate hireDate, Integer deskNumber,
+        String employeeCode, BigDecimal salary, LocalDate hireDate, Integer deskNumber,
         RoleName role, AccountStatus accountStatus) {
     public static EmployeeResponse from(Employee employee) {
         return new EmployeeResponse(employee.getId(), employee.getUsername(), employee.getFullName(),
@@ -16,3 +17,4 @@ public record EmployeeResponse(Long id, String username, String fullName, String
                 employee.getRole(), employee.getAccountStatus());
     }
 }
+

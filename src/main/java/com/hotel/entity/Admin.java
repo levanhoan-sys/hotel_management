@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.math.BigDecimal;
 
 @Getter
 @Setter
@@ -21,8 +22,15 @@ public class Admin extends Employee {
     private String permissions;
 
     public Admin(String username, String password, String fullName, String email, String phone,
+                 String employeeCode, BigDecimal salary, LocalDate hireDate, String permissions) {
+        super(username, password, fullName, email, phone, RoleName.ROLE_ADMIN, employeeCode, salary, hireDate);
+        this.permissions = permissions;
+    }
+
+    public Admin(String username, String password, String fullName, String email, String phone,
                  String employeeCode, Double salary, LocalDate hireDate, String permissions) {
         super(username, password, fullName, email, phone, RoleName.ROLE_ADMIN, employeeCode, salary, hireDate);
         this.permissions = permissions;
     }
 }
+

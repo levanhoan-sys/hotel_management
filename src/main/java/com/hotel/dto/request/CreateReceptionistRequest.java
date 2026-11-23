@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
+import java.math.BigDecimal;
 
 public record CreateReceptionistRequest(
         @NotBlank @Size(max = 50) String username,
@@ -14,7 +15,8 @@ public record CreateReceptionistRequest(
         @NotBlank @Email @Size(max = 100) String email,
         @Size(max = 20) String phone,
         @NotBlank @Size(max = 30) String employeeCode,
-        @PositiveOrZero Double salary,
+        @PositiveOrZero BigDecimal salary,
         @NotNull LocalDate hireDate,
         @PositiveOrZero Integer deskNumber
 ) { }
+

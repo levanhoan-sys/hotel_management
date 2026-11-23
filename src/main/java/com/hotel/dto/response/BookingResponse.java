@@ -37,9 +37,9 @@ public class BookingResponse {
     private List<BookingRoomResponse> rooms;
     private List<String> roomImageUrls;
     private List<ServiceOrderResponse> serviceOrders;
-    private double totalRoomCharge;
-    private double totalServiceCharge;
-    private double estimatedTotal;
+    private BigDecimal totalRoomCharge;
+    private BigDecimal totalServiceCharge;
+    private BigDecimal estimatedTotal;
     private java.time.LocalDateTime cancelledAt;
     private String cancelledBy;
     private String cancellationReason;
@@ -59,8 +59,9 @@ public class BookingResponse {
                 o.getBookingDetail() == null ? null : o.getBookingDetail().getRoom().getRoomNumber(),
                 o.getUnitPrice(), o.getApprovalStatus(), o.isCancelled(), o.getOrderedAt(), o.getCancelledAt(), o.getCancellationReason())).toList();
 
-        double roomCharge = booking.calculateTotalRoomCharge();
-        double serviceCharge = booking.calculateTotalServiceCharge();
+        BigDecimal roomCharge = booking.calculateTotalRoomChargeBigDecimal();
+        BigDecimal serviceCharge = booking.calculateTotalServiceChargeBigDecimal();
+        BigDecimal estimated = roomCharge.add(serviceCharge);
 
         return BookingResponse.builder()
                 .id(booking.getId())
@@ -88,7 +89,7 @@ public class BookingResponse {
                 .serviceOrders(orders)
                 .totalRoomCharge(roomCharge)
                 .totalServiceCharge(serviceCharge)
-                .estimatedTotal(roomCharge + serviceCharge)
+                .estimatedTotal(estimated)
                 .cancelledAt(booking.getCancelledAt())
                 .cancelledBy(booking.getCancelledBy())
                 .cancellationReason(booking.getCancellationReason())
@@ -98,8 +99,8 @@ public class BookingResponse {
 
     public record BookingRoomResponse(Long roomId, String roomNumber, int guestCount, int capacity, BigDecimal pricePerNight, Long bookingRoomId) { }
 
-    public record ServiceOrderResponse(String name, int quantity, String unit, double subTotal,
-                                        Long id, Long bookingRoomId, String roomNumber, double unitPrice,
+    public record ServiceOrderResponse(String name, int quantity, String unit, BigDecimal subTotal,
+                                        Long id, Long bookingRoomId, String roomNumber, BigDecimal unitPrice,
                                         ServiceOrderStatus approvalStatus, boolean cancelled, java.time.LocalDateTime orderedAt,
                                         java.time.LocalDateTime cancelledAt, String cancellationReason) { }
 }
