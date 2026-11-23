@@ -6,6 +6,7 @@ import com.hotel.repository.RoomBlockRepository;
 import com.hotel.repository.RoomRepository;
 import com.hotel.repository.RoomTypeRepository;
 import com.hotel.repository.ServiceItemRepository;
+import com.hotel.service.RoomTypeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,10 +25,11 @@ class RoomServiceImplTest {
     @Mock RoomBlockRepository roomBlockRepository;
     @Mock BookingRepository bookingRepository;
     @Mock ServiceItemRepository serviceItems;
+    @Mock RoomTypeService roomTypeService;
     RoomServiceImpl service;
 
     @BeforeEach void setUp() {
-        service = new RoomServiceImpl(roomRepository, roomTypeRepository, roomBlockRepository, bookingRepository, serviceItems);
+        service = new RoomServiceImpl(roomRepository, roomTypeRepository, roomBlockRepository, bookingRepository, serviceItems, roomTypeService);
     }
 
     @Test void rejectsDateRangeWhenCheckoutIsNotAfterCheckin() {

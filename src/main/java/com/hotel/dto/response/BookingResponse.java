@@ -96,7 +96,7 @@ public class BookingResponse {
                 .build();
     }
 
-    public record BookingRoomResponse(Long roomId, String roomNumber, int guestCount, int capacity, double pricePerNight, Long bookingRoomId) { }
+    public record BookingRoomResponse(Long roomId, String roomNumber, int guestCount, int capacity, BigDecimal pricePerNight, Long bookingRoomId) { }
 
     public record ServiceOrderResponse(String name, int quantity, String unit, double subTotal,
                                         Long id, Long bookingRoomId, String roomNumber, double unitPrice,

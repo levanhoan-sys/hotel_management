@@ -18,6 +18,7 @@ import com.hotel.repository.RoomBlockRepository;
 import com.hotel.repository.BookingRepository;
 import com.hotel.repository.ServiceItemRepository;
 import com.hotel.service.RoomService;
+import com.hotel.service.RoomTypeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +35,7 @@ public class RoomServiceImpl implements RoomService {
     private final RoomBlockRepository roomBlockRepository;
     private final BookingRepository bookingRepository;
     private final ServiceItemRepository serviceItemRepository;
+    private final RoomTypeService roomTypeService;
 
     @Override
     @Transactional
@@ -147,25 +149,18 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<RoomTypeResponse> getRoomTypes() { return roomTypeRepository.findAll().stream().map(RoomTypeResponse::from).toList(); }
+    public List<RoomTypeResponse> getRoomTypes() { return roomTypeService.getRoomTypes(); }
 
     @Override
     @Transactional
     public RoomTypeResponse createRoomType(RoomTypeRequest request) {
-        if (roomTypeRepository.findByName(request.name().trim()).isPresent()) throw new com.hotel.exception.ConflictException("Room type name is already in use");
-        RoomType type = new RoomType(request.name().trim(), request.basePrice(), request.capacity(), request.description(), request.imageUrl(), request.areaSqm(), request.amenities());
-        return RoomTypeResponse.from(roomTypeRepository.save(type));
+        return roomTypeService.createRoomType(request);
     }
 
     @Override
     @Transactional
     public RoomTypeResponse updateRoomType(Long id, RoomTypeRequest request) {
-        RoomType type = roomTypeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Room type not found"));
-        roomTypeRepository.findByName(request.name().trim()).filter(existing -> !existing.getId().equals(id)).ifPresent(existing -> { throw new com.hotel.exception.ConflictException("Room type name is already in use"); });
-        type.setName(request.name().trim()); type.setBasePrice(request.basePrice()); type.setCapacity(request.capacity());
-        type.setDescription(request.description()); type.setImageUrl(request.imageUrl());
-        type.setAreaSqm(request.areaSqm()); type.setAmenities(request.amenities());
-        return RoomTypeResponse.from(type);
+        return roomTypeService.updateRoomType(id, request);
     }
 
     private java.util.Set<com.hotel.entity.ServiceItem> resolveServices(java.util.Set<Long> ids) {

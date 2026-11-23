@@ -36,3 +36,10 @@ build/
 *.log
 .DS_Store
 Thumbs.db
+
+### Frontend (Node / Vite) ###
+node_modules/
+frontend/dist/
+
+### VS Code ###
+.vscode/

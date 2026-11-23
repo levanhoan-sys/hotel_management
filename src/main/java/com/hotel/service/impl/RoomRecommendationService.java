@@ -55,10 +55,10 @@ public class RoomRecommendationService {
                 .filter(room -> !alternatives || target == null || !room.getRoomType().getId().equals(target.getId()))
                 .map(room -> {
                     RoomType type = room.getRoomType();
-                    double referencePrice = target == null ? type.getBasePrice() : target.getBasePrice();
+                    double referencePrice = target == null ? type.getBasePriceDouble() : target.getBasePriceDouble();
                     int score = score(target, type, guests);
                     return RoomRecommendationResponse.builder().room(RoomResponse.fromEntity(room)).score(score)
-                            .priceDifference(type.getBasePrice() - referencePrice)
+                            .priceDifference(type.getBasePriceDouble() - referencePrice)
                             .availableQuantity(checkIn == null ? null : byType.get(type.getId()).size())
                             .availabilityChecked(checkIn != null).build();
                 }).sorted(Comparator.comparingInt(RoomRecommendationResponse::getScore).reversed()
@@ -68,7 +68,7 @@ public class RoomRecommendationService {
 
     private int score(RoomType reference, RoomType candidate, Integer guests) {
         if (reference == null) return 100;
-        double priceSimilarity = 1 - Math.min(1, Math.abs(reference.getBasePrice() - candidate.getBasePrice()) / Math.max(reference.getBasePrice(), 1));
+        double priceSimilarity = 1 - Math.min(1, Math.abs(reference.getBasePriceDouble() - candidate.getBasePriceDouble()) / Math.max(reference.getBasePriceDouble(), 1));
         double capacitySimilarity = guests == null ? 1 - Math.min(1, Math.abs(reference.getCapacity() - candidate.getCapacity()) / (double) Math.max(reference.getCapacity(), 1))
                 : (candidate.getCapacity() >= guests ? 1 : 0);
         double typeSimilarity = reference.getId().equals(candidate.getId()) ? 1 : 0;

@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -25,21 +27,34 @@ public class BookingDetail extends BaseEntity {
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
 
-    @Column(name = "price_per_night", nullable = false)
-    private double pricePerNight;
+    @Column(name = "price_per_night", nullable = false, precision = 15, scale = 2)
+    private BigDecimal pricePerNight;
 
     @ColumnDefault("1")
     @Column(name = "guest_count", nullable = false)
     private int guestCount = 1;
 
-    public BookingDetail(Booking booking, Room room, double pricePerNight) {
+    public BookingDetail(Booking booking, Room room, BigDecimal pricePerNight) {
         this(booking, room, pricePerNight, 1);
     }
 
-    public BookingDetail(Booking booking, Room room, double pricePerNight, int guestCount) {
+    public BookingDetail(Booking booking, Room room, BigDecimal pricePerNight, int guestCount) {
         this.booking = booking;
         this.room = room;
         this.pricePerNight = pricePerNight;
         this.guestCount = guestCount;
     }
+
+    public BookingDetail(Booking booking, Room room, double pricePerNight) {
+        this(booking, room, BigDecimal.valueOf(pricePerNight), 1);
+    }
+
+    public BookingDetail(Booking booking, Room room, double pricePerNight, int guestCount) {
+        this(booking, room, BigDecimal.valueOf(pricePerNight), guestCount);
+    }
+
+    public double getPricePerNightDouble() {
+        return pricePerNight != null ? pricePerNight.doubleValue() : 0.0;
+    }
 }
+

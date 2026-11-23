@@ -14,7 +14,7 @@ public class RoomResponse {
     private RoomStatus status;
     private boolean operational;
     private String roomTypeName;
-    private double basePrice;
+    private java.math.BigDecimal basePrice;
     private int capacity;
     private String description;
     private String imageUrl;
@@ -30,7 +30,7 @@ public class RoomResponse {
                 .status(room.getStatus())
                 .operational(room.isOperational())
                 .roomTypeName(room.getRoomType() != null ? room.getRoomType().getName() : null)
-                .basePrice(room.getRoomType() != null ? room.getRoomType().getBasePrice() : 0.0)
+                .basePrice(room.getRoomType() != null ? room.getRoomType().getBasePrice() : java.math.BigDecimal.ZERO)
                 .capacity(room.getRoomType() != null ? room.getRoomType().getCapacity() : 0)
                 .description(room.getRoomType() != null ? room.getRoomType().getDescription() : null)
                 .imageUrl(room.getRoomType() != null ? room.getRoomType().getImageUrl() : null)

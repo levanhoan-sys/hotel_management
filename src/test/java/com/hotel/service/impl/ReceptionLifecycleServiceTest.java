@@ -14,6 +14,7 @@ import com.hotel.repository.BookingRepository;
 import com.hotel.repository.InvoiceRepository;
 import com.hotel.repository.PaymentRepository;
 import com.hotel.repository.RoomRepository;
+import com.hotel.repository.ServiceOrderRepository;
 import com.hotel.service.ServiceUsageService;
 import com.hotel.service.impl.InvoiceServiceImpl;
 import com.hotel.service.impl.ReceptionServiceImpl;
@@ -37,6 +38,7 @@ class ReceptionLifecycleServiceTest {
     @Mock ServiceUsageService serviceUsageService;
     @Mock InvoiceRepository invoices;
     @Mock PaymentRepository payments;
+    @Mock ServiceOrderRepository serviceOrders;
 
     @Test void checkInRejectsBookingThatIsNotConfirmed() {
         Booking booking = booking(BookingStatus.PENDING, RoomStatus.AVAILABLE);
@@ -57,7 +59,7 @@ class ReceptionLifecycleServiceTest {
                 BigDecimal.ZERO, BigDecimal.ZERO, new BigDecimal("100.00"));
         invoice.issue();
         when(invoices.findByBookingIdForUpdate(2L)).thenReturn(Optional.of(invoice));
-        InvoiceServiceImpl service = new InvoiceServiceImpl(bookings, invoices, payments, rooms);
+        InvoiceServiceImpl service = new InvoiceServiceImpl(bookings, invoices, payments, rooms, serviceOrders);
 
         assertThrows(BadRequestException.class, () -> service.completeCheckout(2L));
         verifyNoInteractions(rooms);

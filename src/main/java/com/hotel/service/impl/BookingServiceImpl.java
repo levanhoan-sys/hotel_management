@@ -95,14 +95,12 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = new Booking(owner, request.getCheckInDate(), request.getCheckOutDate());
         booking.setStatus(depositRequired ? BookingStatus.PENDING_DEPOSIT : BookingStatus.PENDING);
         for (Room room : rooms) {
-            double fixedNightlyPrice = pricing.computePrice(room.getRoomType().getBasePrice(), 1);
+            BigDecimal fixedNightlyPrice = pricing.computePrice(room.getRoomType().getBasePrice(), 1);
             booking.addBookingDetail(room, fixedNightlyPrice, guestCount(request.getGuestCounts(), room.getId()));
         }
 
         if (depositRequired) {
-            BigDecimal roomTotal = booking.getDetails().stream()
-                    .map(detail -> BigDecimal.valueOf(detail.getPricePerNight()).multiply(BigDecimal.valueOf(booking.getNumberOfNights())))
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal roomTotal = booking.calculateTotalRoomChargeBigDecimal();
             booking.setDepositRate(bookingProperties.depositRate());
             booking.setDepositAmount(roomTotal.multiply(bookingProperties.depositRate()).setScale(0, RoundingMode.HALF_UP));
             booking.setDepositDeadline(Instant.now().plusSeconds(bookingProperties.depositTimeoutMinutes() * 60L));

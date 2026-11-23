@@ -88,7 +88,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         List<InvoiceItem> items = new ArrayList<>();
 
         for (BookingDetail detail : booking.getDetails()) {
-            BigDecimal perNight = money(BigDecimal.valueOf(detail.getPricePerNight()));
+            BigDecimal perNight = money(detail.getPricePerNight());
             BigDecimal quantity = BigDecimal.valueOf(nights);
             BigDecimal lineTotal = money(perNight.multiply(quantity));
             roomTotal = roomTotal.add(lineTotal);

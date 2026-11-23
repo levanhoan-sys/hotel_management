@@ -109,13 +109,21 @@ public class Booking extends BaseEntity {
         this.bookingCode = "BK-" + UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase();
     }
 
-    public void addBookingDetail(Room room, double pricePerNight) {
+    public void addBookingDetail(Room room, BigDecimal pricePerNight) {
         addBookingDetail(room, pricePerNight, 1);
     }
 
-    public void addBookingDetail(Room room, double pricePerNight, int guestCount) {
+    public void addBookingDetail(Room room, BigDecimal pricePerNight, int guestCount) {
         BookingDetail detail = new BookingDetail(this, room, pricePerNight, guestCount);
         this.details.add(detail);
+    }
+
+    public void addBookingDetail(Room room, double pricePerNight) {
+        addBookingDetail(room, BigDecimal.valueOf(pricePerNight), 1);
+    }
+
+    public void addBookingDetail(Room room, double pricePerNight, int guestCount) {
+        addBookingDetail(room, BigDecimal.valueOf(pricePerNight), guestCount);
     }
 
     public void replaceRooms(List<BookingDetail> replacementDetails) {
@@ -192,11 +200,15 @@ public class Booking extends BaseEntity {
         return Math.max(nights, 1);
     }
 
-    public double calculateTotalRoomCharge() {
+    public BigDecimal calculateTotalRoomChargeBigDecimal() {
         int nights = getNumberOfNights();
         return details.stream()
-                .mapToDouble(d -> d.getPricePerNight() * nights)
-                .sum();
+                .map(d -> (d.getPricePerNight() != null ? d.getPricePerNight() : BigDecimal.ZERO).multiply(BigDecimal.valueOf(nights)))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public double calculateTotalRoomCharge() {
+        return calculateTotalRoomChargeBigDecimal().doubleValue();
     }
 
     public double calculateTotalServiceCharge() {
