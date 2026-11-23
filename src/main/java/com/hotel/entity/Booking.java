@@ -118,14 +118,6 @@ public class Booking extends BaseEntity {
         this.details.add(detail);
     }
 
-    public void addBookingDetail(Room room, double pricePerNight) {
-        addBookingDetail(room, BigDecimal.valueOf(pricePerNight), 1);
-    }
-
-    public void addBookingDetail(Room room, double pricePerNight, int guestCount) {
-        addBookingDetail(room, BigDecimal.valueOf(pricePerNight), guestCount);
-    }
-
     public void replaceRooms(List<BookingDetail> replacementDetails) {
         if (status != BookingStatus.PENDING && status != BookingStatus.CONFIRMED)
             throw new IllegalStateException("Rooms can only be changed for pending or confirmed bookings");
@@ -207,8 +199,8 @@ public class Booking extends BaseEntity {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public double calculateTotalRoomCharge() {
-        return calculateTotalRoomChargeBigDecimal().doubleValue();
+    public BigDecimal calculateTotalRoomCharge() {
+        return calculateTotalRoomChargeBigDecimal();
     }
 
     public BigDecimal calculateTotalServiceChargeBigDecimal() {
@@ -218,7 +210,7 @@ public class Booking extends BaseEntity {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public double calculateTotalServiceCharge() {
-        return calculateTotalServiceChargeBigDecimal().doubleValue();
+    public BigDecimal calculateTotalServiceCharge() {
+        return calculateTotalServiceChargeBigDecimal();
     }
 }

@@ -43,8 +43,10 @@ public class ReceptionManagementController {
     @GetMapping("/summary")
     public ApiResponse<HotelSummaryResponse> summary() {
         var allRooms = rooms.findAll();
-        long revenue = Math.round(invoices.findAll().stream().filter(com.hotel.entity.Invoice::isPaid)
-                .map(com.hotel.entity.Invoice::getTotalAmount).reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add).doubleValue());
+        java.math.BigDecimal revenue = invoices.findAll().stream()
+                .filter(com.hotel.entity.Invoice::isPaid)
+                .map(com.hotel.entity.Invoice::getTotalAmount)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
         return ApiResponse.ok(new HotelSummaryResponse(allRooms.size(), count(allRooms, RoomStatus.AVAILABLE), count(allRooms, RoomStatus.OCCUPIED), count(allRooms, RoomStatus.CLEANING), count(allRooms, RoomStatus.MAINTENANCE), bookings.countByStatus(BookingStatus.CONFIRMED), bookings.countByStatus(BookingStatus.CHECKED_IN), customers.count(), revenue));
     }
 

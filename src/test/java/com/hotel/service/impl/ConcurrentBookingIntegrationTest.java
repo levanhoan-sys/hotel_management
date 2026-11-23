@@ -49,12 +49,12 @@ class ConcurrentBookingIntegrationTest {
         rooms.deleteAll();
         customers.deleteAll();
         roomTypes.deleteAll();
-        RoomType type = roomTypes.save(new RoomType("Concurrency Standard", 100.0, 2, null, null));
+        RoomType type = roomTypes.save(new RoomType("Concurrency Standard", new java.math.BigDecimal("100.00"), 2, null, null));
         Room room = new Room();
         room.setRoomNumber("C-101");
         room.setFloor(1);
         room.setRoomType(type);
-        room.setStatus(RoomStatus.AVAILABLE);
+        room.changeStatus(RoomStatus.AVAILABLE);
         room.setOperational(true);
         roomId = rooms.save(room).getId();
         Customer customer = new Customer("concurrency-customer", passwords.encode("strong-password"),

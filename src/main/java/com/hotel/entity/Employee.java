@@ -37,15 +37,5 @@ public abstract class Employee extends User {
         this.salary = salary;
         this.hireDate = hireDate;
     }
-
-    public Employee(String username, String password, String fullName, String email, String phone,
-                    RoleName role, String employeeCode, Double salary, LocalDate hireDate) {
-        this(username, password, fullName, email, phone, role, employeeCode,
-                salary != null ? BigDecimal.valueOf(salary) : null, hireDate);
-    }
-
-    public Double getSalaryDouble() {
-        return salary != null ? salary.doubleValue() : null;
-    }
 }
 

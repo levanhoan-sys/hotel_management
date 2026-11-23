@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -35,8 +36,8 @@ public class RoomController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOut,
             @RequestParam(required = false) Long roomTypeId,
             @RequestParam(required = false) Integer minCapacity,
-            @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice) {
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice) {
         if (checkIn != null || checkOut != null || roomTypeId != null || minCapacity != null || minPrice != null || maxPrice != null) {
             return ResponseEntity.ok(ApiResponse.ok(roomService.searchRooms(checkIn, checkOut, roomTypeId, minCapacity, minPrice, maxPrice)));
         }

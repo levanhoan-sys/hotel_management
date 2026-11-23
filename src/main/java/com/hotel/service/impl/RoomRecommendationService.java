@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -55,20 +56,25 @@ public class RoomRecommendationService {
                 .filter(room -> !alternatives || target == null || !room.getRoomType().getId().equals(target.getId()))
                 .map(room -> {
                     RoomType type = room.getRoomType();
-                    double referencePrice = target == null ? type.getBasePriceDouble() : target.getBasePriceDouble();
+                    BigDecimal referencePrice = target == null ? type.getBasePrice() : target.getBasePrice();
+                    BigDecimal priceDifference = (type.getBasePrice() != null && referencePrice != null)
+                            ? type.getBasePrice().subtract(referencePrice)
+                            : BigDecimal.ZERO;
                     int score = score(target, type, guests);
                     return RoomRecommendationResponse.builder().room(RoomResponse.fromEntity(room)).score(score)
-                            .priceDifference(type.getBasePriceDouble() - referencePrice)
+                            .priceDifference(priceDifference)
                             .availableQuantity(checkIn == null ? null : byType.get(type.getId()).size())
                             .availabilityChecked(checkIn != null).build();
                 }).sorted(Comparator.comparingInt(RoomRecommendationResponse::getScore).reversed()
-                        .thenComparingDouble(r -> Math.abs(r.getPriceDifference())))
+                        .thenComparing(r -> r.getPriceDifference().abs()))
                 .limit(limit == null ? 4 : limit).toList();
     }
 
     private int score(RoomType reference, RoomType candidate, Integer guests) {
         if (reference == null) return 100;
-        double priceSimilarity = 1 - Math.min(1, Math.abs(reference.getBasePriceDouble() - candidate.getBasePriceDouble()) / Math.max(reference.getBasePriceDouble(), 1));
+        double refVal = reference.getBasePrice() != null ? reference.getBasePrice().doubleValue() : 0.0;
+        double candVal = candidate.getBasePrice() != null ? candidate.getBasePrice().doubleValue() : 0.0;
+        double priceSimilarity = 1 - Math.min(1, Math.abs(refVal - candVal) / Math.max(refVal, 1.0));
         double capacitySimilarity = guests == null ? 1 - Math.min(1, Math.abs(reference.getCapacity() - candidate.getCapacity()) / (double) Math.max(reference.getCapacity(), 1))
                 : (candidate.getCapacity() >= guests ? 1 : 0);
         double typeSimilarity = reference.getId().equals(candidate.getId()) ? 1 : 0;

@@ -71,14 +71,14 @@ class ReceptionLifecycleServiceTest {
         Booking booking = new Booking(customer, LocalDate.now(), LocalDate.now().plusDays(1));
         booking.setId(2L);
         booking.setStatus(status);
-        RoomType type = new RoomType("Standard", 100.0, 2, null, null);
+        RoomType type = new RoomType("Standard", new BigDecimal("100.00"), 2, null, null);
         Room room = new Room();
         room.setId(7L);
         room.setRoomNumber("101");
         room.setRoomType(type);
-        room.setStatus(roomStatus);
+        room.changeStatus(roomStatus);
         room.setOperational(true);
-        booking.addBookingDetail(room, 100.0);
+        booking.addBookingDetail(room, new BigDecimal("100.00"));
         return booking;
     }
 }

@@ -60,7 +60,7 @@ public class ReceptionServiceImpl implements ReceptionService {
         }
 
         booking.checkIn();
-        for (Room room : lockedRooms) room.setStatus(RoomStatus.OCCUPIED);
+        for (Room room : lockedRooms) room.changeStatus(RoomStatus.OCCUPIED);
 
         Booking saved = bookingRepository.save(booking);
         return BookingResponse.fromEntity(saved);
@@ -85,7 +85,7 @@ public class ReceptionServiceImpl implements ReceptionService {
             throw new BadRequestException("Room is not in CLEANING status");
         }
 
-        room.setStatus(RoomStatus.AVAILABLE);
+        room.changeStatus(RoomStatus.AVAILABLE);
         roomRepository.save(room);
     }
 }

@@ -73,13 +73,13 @@ class InvoiceServiceImplTest {
         Booking booking = new Booking(customer, LocalDate.now(), LocalDate.now().plusDays(2));
         booking.setId(12L);
         booking.setStatus(BookingStatus.CHECKED_IN);
-        RoomType type = new RoomType("Standard", 120.50, 2, null, null);
+        RoomType type = new RoomType("Standard", new BigDecimal("120.50"), 2, null, null);
         Room room = new Room();
-        room.setId(4L); room.setRoomNumber("104"); room.setRoomType(type); room.setStatus(RoomStatus.OCCUPIED);
-        BookingDetail detail = new BookingDetail(booking, room, 120.50, 2);
+        room.setId(4L); room.setRoomNumber("104"); room.setRoomType(type); room.changeStatus(RoomStatus.OCCUPIED);
+        BookingDetail detail = new BookingDetail(booking, room, new BigDecimal("120.50"), 2);
         booking.getDetails().add(detail);
         booking.getServiceOrders().add(new com.hotel.entity.ServiceOrder(booking, detail,
-                new ServiceItem("Breakfast", 3.25, "meal", true), 2));
+                new ServiceItem("Breakfast", new BigDecimal("3.25"), "meal", true), 2));
         when(bookings.findByIdForUpdate(12L)).thenReturn(Optional.of(booking));
         when(invoices.findByBookingIdForUpdate(12L)).thenReturn(Optional.empty());
         when(invoices.save(any(Invoice.class))).thenAnswer(invocation -> invocation.getArgument(0));

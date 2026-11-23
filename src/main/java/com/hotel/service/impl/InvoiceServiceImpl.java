@@ -192,7 +192,7 @@ public class InvoiceServiceImpl implements InvoiceService {
                 throw new BadRequestException("Room " + room.getRoomNumber() + " is not occupied by this booking");
         }
         booking.complete();
-        lockedRooms.forEach(room -> room.setStatus(RoomStatus.CLEANING));
+        lockedRooms.forEach(room -> room.changeStatus(RoomStatus.CLEANING));
         return InvoiceResponse.fromEntity(invoice);
     }
 

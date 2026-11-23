@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -21,9 +22,9 @@ class RoomRecommendationServiceTest {
     @Mock RoomTypeRepository roomTypes;
 
     @Test void groupsByRoomTypeAndRequiresRequestedQuantity() {
-        RoomType wanted = type(1L, "Standard", 900_000, 2, "WiFi, TV");
-        RoomType tooFew = type(2L, "Deluxe", 1_100_000, 3, "WiFi, TV");
-        RoomType enough = type(3L, "Twin", 850_000, 2, "WiFi");
+        RoomType wanted = type(1L, "Standard", new BigDecimal("900000"), 2, "WiFi, TV");
+        RoomType tooFew = type(2L, "Deluxe", new BigDecimal("1100000"), 3, "WiFi, TV");
+        RoomType enough = type(3L, "Twin", new BigDecimal("850000"), 2, "WiFi");
         when(rooms.findById(99L)).thenReturn(java.util.Optional.of(room(99L, wanted, "099")));
         when(rooms.searchRooms(null, null, null, 2, null, null)).thenReturn(List.of(
                 room(1L, wanted, "101"), room(2L, tooFew, "201"), room(3L, enough, "301"), room(4L, enough, "302"), room(5L, enough, "303")
@@ -36,12 +37,13 @@ class RoomRecommendationServiceTest {
         assertNull(result.getFirst().getAvailableQuantity());
         assertFalse(result.getFirst().isAvailabilityChecked());
         assertTrue(result.getFirst().getScore() >= 0 && result.getFirst().getScore() <= 100);
+        assertEquals(new BigDecimal("-50000"), result.getFirst().getPriceDifference());
     }
 
-    private RoomType type(Long id, String name, double price, int capacity, String amenities) {
+    private RoomType type(Long id, String name, BigDecimal price, int capacity, String amenities) {
         RoomType type = new RoomType(name, price, capacity, name, null, null, amenities); type.setId(id); return type;
     }
     private Room room(Long id, RoomType type, String number) {
-        Room room = new Room(); room.setId(id); room.setRoomType(type); room.setRoomNumber(number); room.setStatus(RoomStatus.AVAILABLE); room.setOperational(true); return room;
+        Room room = new Room(); room.setId(id); room.setRoomType(type); room.setRoomNumber(number); room.changeStatus(RoomStatus.AVAILABLE); room.setOperational(true); return room;
     }
 }

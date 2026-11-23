@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -53,7 +54,6 @@ public class RoomServiceImpl implements RoomService {
         room.setFloor(request.getFloor());
         room.setRoomType(roomType);
         room.setServices(resolveServices(request.getServiceIds()));
-        room.setStatus(RoomStatus.AVAILABLE);
 
         Room saved = roomRepository.save(room);
         return RoomResponse.fromEntity(saved);
@@ -103,9 +103,13 @@ public class RoomServiceImpl implements RoomService {
         if (status == RoomStatus.MAINTENANCE && bookingRepository.existsActiveOrFutureBooking(id, LocalDate.now()))
             throw new BadRequestException("Room has an active or future booking");
         if (status == RoomStatus.AVAILABLE && room.getStatus() == RoomStatus.CLEANING) {
-            room.setStatus(RoomStatus.AVAILABLE);
+            room.changeStatus(RoomStatus.AVAILABLE);
         } else if (status == RoomStatus.MAINTENANCE || status == RoomStatus.CLEANING) {
-            room.setStatus(status);
+            try {
+                room.changeStatus(status);
+            } catch (IllegalStateException e) {
+                throw new BadRequestException(e.getMessage());
+            }
         } else if (status != room.getStatus()) {
             throw new BadRequestException("Status can only be set to MAINTENANCE or CLEANING manually");
         }
@@ -132,18 +136,18 @@ public class RoomServiceImpl implements RoomService {
         if (!operational && room.getStatus() == RoomStatus.OCCUPIED) throw new BadRequestException("An occupied room cannot be taken out of operation");
         if (!operational && bookingRepository.existsActiveOrFutureBooking(id, LocalDate.now())) throw new BadRequestException("Room has an active or future booking");
         room.setOperational(operational);
-        if (!operational) room.setStatus(RoomStatus.MAINTENANCE);
-        else if (room.getStatus() == RoomStatus.MAINTENANCE) room.setStatus(RoomStatus.AVAILABLE);
+        if (!operational) room.changeStatus(RoomStatus.MAINTENANCE);
+        else if (room.getStatus() == RoomStatus.MAINTENANCE) room.changeStatus(RoomStatus.AVAILABLE);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<RoomResponse> searchRooms(LocalDate checkIn, LocalDate checkOut, Long roomTypeId, Integer minCapacity, Double minPrice, Double maxPrice) {
+    public List<RoomResponse> searchRooms(LocalDate checkIn, LocalDate checkOut, Long roomTypeId, Integer minCapacity, BigDecimal minPrice, BigDecimal maxPrice) {
         if ((checkIn == null) != (checkOut == null)) throw new BadRequestException("Both check-in and check-out dates are required");
         if (checkIn != null && !checkOut.isAfter(checkIn)) throw new BadRequestException("Check-out date must be after check-in date");
         if (minCapacity != null && minCapacity < 1) throw new BadRequestException("Minimum capacity must be at least 1");
-        if (minPrice != null && minPrice < 0 || maxPrice != null && maxPrice < 0) throw new BadRequestException("Price filters cannot be negative");
-        if (minPrice != null && maxPrice != null && minPrice > maxPrice) throw new BadRequestException("Minimum price cannot exceed maximum price");
+        if (minPrice != null && minPrice.signum() < 0 || maxPrice != null && maxPrice.signum() < 0) throw new BadRequestException("Price filters cannot be negative");
+        if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) throw new BadRequestException("Minimum price cannot exceed maximum price");
         return roomRepository.searchRooms(checkIn, checkOut, roomTypeId, minCapacity, minPrice, maxPrice).stream().map(RoomResponse::fromEntity).toList();
     }
 

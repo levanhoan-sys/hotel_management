@@ -6,9 +6,11 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 
@@ -19,19 +21,20 @@ import java.time.LocalDate;
 @Table(name = "room_blocks", indexes = {
         @jakarta.persistence.Index(name = "idx_room_block_range", columnList = "room_id, start_date, end_date")
 })
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class RoomBlock extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "room_id", nullable = false)
-    private Room room;
+    Room room;
 
     @Column(name = "start_date", nullable = false)
-    private LocalDate startDate;
+    LocalDate startDate;
 
     @Column(name = "end_date", nullable = false)
-    private LocalDate endDate;
+    LocalDate endDate;
 
     @Column(nullable = false, length = 255)
-    private String reason;
+    String reason;
 
     public RoomBlock(Room room, LocalDate startDate, LocalDate endDate, String reason) {
         this.room = room;

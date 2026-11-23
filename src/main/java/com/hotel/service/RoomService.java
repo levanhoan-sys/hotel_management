@@ -8,6 +8,7 @@ import com.hotel.dto.response.RoomTypeResponse;
 import com.hotel.dto.response.RoomBlockResponse;
 import com.hotel.enums.RoomStatus;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -21,7 +22,7 @@ public interface RoomService {
     RoomResponse updateRoom(Long id, CreateRoomRequest request);
     void setRoomOperational(Long id, boolean operational);
     List<RoomResponse> searchRooms(LocalDate checkIn, LocalDate checkOut, Long roomTypeId,
-                                   Integer minCapacity, Double minPrice, Double maxPrice);
+                                   Integer minCapacity, BigDecimal minPrice, BigDecimal maxPrice);
     List<RoomTypeResponse> getRoomTypes();
     RoomTypeResponse createRoomType(RoomTypeRequest request);
     RoomTypeResponse updateRoomType(Long id, RoomTypeRequest request);

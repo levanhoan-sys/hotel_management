@@ -82,11 +82,11 @@ class BookingServiceImplTest {
     }
 
     private Room room(Long id, RoomStatus status, int capacity) {
-        RoomType type = new RoomType("Standard", 100.0, capacity, null, null);
+        RoomType type = new RoomType("Standard", new BigDecimal("100.00"), capacity, null, null);
         Room room = new Room();
         room.setRoomNumber("R" + id);
         room.setFloor(1);
-        room.setStatus(status);
+        room.changeStatus(status);
         room.setRoomType(type);
         room.setId(id);
         room.setOperational(true);

@@ -7,9 +7,5 @@ public record ServiceItemResponse(Long id, String name, BigDecimal unitPrice, St
     public static ServiceItemResponse from(ServiceItem item) {
         return new ServiceItemResponse(item.getId(), item.getName(), item.getUnitPrice(), item.getUnit(), item.isActive());
     }
-
-    public ServiceItemResponse(Long id, String name, double unitPrice, String unit, boolean active) {
-        this(id, name, BigDecimal.valueOf(unitPrice), unit, active);
-    }
 }
 

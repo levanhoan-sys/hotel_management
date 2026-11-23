@@ -44,17 +44,5 @@ public class BookingDetail extends BaseEntity {
         this.pricePerNight = pricePerNight;
         this.guestCount = guestCount;
     }
-
-    public BookingDetail(Booking booking, Room room, double pricePerNight) {
-        this(booking, room, BigDecimal.valueOf(pricePerNight), 1);
-    }
-
-    public BookingDetail(Booking booking, Room room, double pricePerNight, int guestCount) {
-        this(booking, room, BigDecimal.valueOf(pricePerNight), guestCount);
-    }
-
-    public double getPricePerNightDouble() {
-        return pricePerNight != null ? pricePerNight.doubleValue() : 0.0;
-    }
 }
 

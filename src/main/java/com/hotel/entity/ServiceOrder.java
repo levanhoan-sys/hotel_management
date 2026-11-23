@@ -81,14 +81,6 @@ public class ServiceOrder extends BaseEntity {
         this.approvalStatus = approvalStatus;
     }
 
-    public double getSubTotalDouble() {
-        return subTotal != null ? subTotal.doubleValue() : 0.0;
-    }
-
-    public double getUnitPriceDouble() {
-        return unitPrice != null ? unitPrice.doubleValue() : 0.0;
-    }
-
     public void approve() {
         if (approvalStatus != ServiceOrderStatus.PENDING) throw new IllegalStateException("Only pending service requests can be approved");
         approvalStatus = ServiceOrderStatus.APPROVED;

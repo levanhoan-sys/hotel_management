@@ -26,11 +26,5 @@ public class Admin extends Employee {
         super(username, password, fullName, email, phone, RoleName.ROLE_ADMIN, employeeCode, salary, hireDate);
         this.permissions = permissions;
     }
-
-    public Admin(String username, String password, String fullName, String email, String phone,
-                 String employeeCode, Double salary, LocalDate hireDate, String permissions) {
-        super(username, password, fullName, email, phone, RoleName.ROLE_ADMIN, employeeCode, salary, hireDate);
-        this.permissions = permissions;
-    }
 }
 

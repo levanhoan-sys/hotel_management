@@ -26,11 +26,5 @@ public class Receptionist extends Employee {
         super(username, password, fullName, email, phone, RoleName.ROLE_RECEPTIONIST, employeeCode, salary, hireDate);
         this.deskNumber = deskNumber;
     }
-
-    public Receptionist(String username, String password, String fullName, String email, String phone,
-                        String employeeCode, Double salary, LocalDate hireDate, int deskNumber) {
-        super(username, password, fullName, email, phone, employeeCode, salary, hireDate);
-        this.deskNumber = deskNumber;
-    }
 }
 
