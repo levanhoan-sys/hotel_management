@@ -893,7 +893,19 @@ function RoomsManagement() {
                             </div>
                           </div>
                         </td>
-                        <td>{r.roomTypeName}</td>
+                        <td>
+                          <b>{r.roomTypeName}</b>
+                          {(r.areaSqm || (r.services && r.services.length > 0)) && (
+                            <small className="cell-sub">
+                              {[
+                                r.areaSqm ? `${r.areaSqm} m²` : '',
+                                r.services && r.services.length > 0 ? `${r.services.length} dịch vụ` : '',
+                              ]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </small>
+                          )}
+                        </td>
                         <td>Tầng {r.floor}</td>
                         <td>{r.capacity} khách</td>
                         <td>{money(r.basePrice)}</td>
@@ -1649,7 +1661,15 @@ function BookingsManagement() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((b) => (
+                  {filtered.map((b) => {
+                    const totalGuests = b.rooms?.reduce((sum, r) => sum + (r.guestCount || 0), 0) || 0
+                    const totalChargeSummary = [
+                      b.depositAmount ? `Cọc: ${money(b.depositAmount)}` : '',
+                      b.totalServiceCharge > 0 ? `DV: ${money(b.totalServiceCharge)}` : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')
+                    return (
                     <tr key={b.id}>
                       <td>
                         <b className="booking-code">{b.bookingCode}</b>
@@ -1657,14 +1677,20 @@ function BookingsManagement() {
                       </td>
                       <td>
                         {date(b.checkInDate)}
-                        <small className="cell-sub">đến {date(b.checkOutDate)}</small>
+                        <small className="cell-sub">
+                          đến {date(b.checkOutDate)}
+                          {b.numberOfNights > 0 ? ` (${b.numberOfNights} đêm)` : ''}
+                        </small>
                       </td>
                       <td>
                         {b.roomNumbers?.map((n) => `#${n}`).join(', ') || '—'}
-                        <small className="cell-sub">{b.rooms?.length || 0} phòng</small>
+                        <small className="cell-sub">
+                          {b.rooms?.length || 0} phòng{totalGuests > 0 ? ` · ${totalGuests} khách` : ''}
+                        </small>
                       </td>
                       <td>
                         <b>{money(b.estimatedTotal)}</b>
+                        {totalChargeSummary && <small className="cell-sub">{totalChargeSummary}</small>}
                       </td>
                       <td>
                         <span className={`status-badge ${statusTone(b.status)}`}>
@@ -1706,7 +1732,8 @@ function BookingsManagement() {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    )
+                  })}
                 </tbody>
               </table>
               {!filtered.length && <div className="empty-table">Không có đặt phòng phù hợp</div>}
