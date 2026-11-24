@@ -23,7 +23,7 @@ export function HomePage() {
         <div className="hg-hero-scrim" />
         <div className="hg-container hg-hero-inner">
           <div className="hg-hero-content">
-            <span className="hg-hero-eyebrow">ĐIỂM DỪNG CHÂN THANH LỊCH · DỊCH VỤ TẬN TÂM</span>
+            <span className="hg-hero-eyebrow">ĐIỂM DỪNG CHÂN THANH LỊCH, DỊCH VỤ TẬN TÂM</span>
             <h1 id="hotel-home-title">Không gian nghỉ dưỡng tinh tế tại Hoàng Gia</h1>
             <p>
               Phòng nghỉ tiện nghi tại Hà Đông, Hà Nội. Chọn ngày lưu trú và tìm phòng phù hợp cho chuyến đi của bạn.

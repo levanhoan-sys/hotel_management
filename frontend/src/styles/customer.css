@@ -270,12 +270,7 @@
   color: #ebd9b4;
 }
 
-.hg-hero-eyebrow::before {
-  content: "";
-  width: 28px;
-  height: 1px;
-  background: var(--hg-gold-400);
-}
+
 
 .hg-hero h1 {
   margin: 18px 0 18px;

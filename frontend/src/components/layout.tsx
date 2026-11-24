@@ -290,9 +290,6 @@ export function PublicLayout() {
                 <Link className="nav-login" to="/login" onClick={() => setOpen(false)}>
                   <LogIn size={16} className="mobile-nav-icon" aria-hidden="true" />
                   <span>Đăng nhập</span>
-                  <span className="desktop-login-arrow" aria-hidden="true">
-                    ↗
-                  </span>
                 </Link>
                 <Link className="mobile-register-link" to="/register" onClick={() => setOpen(false)}>
                   <UserPlus size={16} aria-hidden="true" />
