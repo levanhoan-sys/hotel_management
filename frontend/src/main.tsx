@@ -10,6 +10,7 @@ import './customer-modern.css'
 import './styles/tokens.css'
 import './styles/shared.css'
 import './styles/customer.css'
+import './styles/reception.css'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 30_000, refetchOnWindowFocus: false } } })
 

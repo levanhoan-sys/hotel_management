@@ -38,6 +38,7 @@ function RoomCalendar({ roomId, guests }: { roomId: number; guests: number }) {
   }
 
   const chooseDay = (day: RoomDay) => {
+    if (guests < 1) return
     if (day.date < dateInput(new Date())) return
     if (!checkIn || checkOut || day.date <= checkIn) {
       if (day.status !== 'AVAILABLE') return
@@ -80,9 +81,11 @@ function RoomCalendar({ roomId, guests }: { roomId: number; guests: number }) {
             .map((day) => {
               const past = day.date < dateInput(new Date())
               const selectable =
-                !past && (day.status === 'AVAILABLE' || Boolean(checkIn && !checkOut && day.date > checkIn))
-              const selected = day.date === checkIn || day.date === checkOut
-              const inRange = Boolean(checkIn && checkOut && day.date > checkIn && day.date < checkOut)
+                guests > 0 &&
+                !past &&
+                (day.status === 'AVAILABLE' || Boolean(checkIn && !checkOut && day.date > checkIn))
+              const selected = guests > 0 && (day.date === checkIn || day.date === checkOut)
+              const inRange = guests > 0 && Boolean(checkIn && checkOut && day.date > checkIn && day.date < checkOut)
               return (
                 <button
                   type="button"
@@ -91,7 +94,7 @@ function RoomCalendar({ roomId, guests }: { roomId: number; guests: number }) {
                   className={`hg-calendar-day ${day.status.toLowerCase()} ${selected ? 'selected' : ''} ${
                     inRange ? 'in-range' : ''
                   }`}
-                  title={`${fmtDate(day.date)} · ${labels[day.status]}`}
+                  title={`${fmtDate(day.date)} — ${labels[day.status]}`}
                   aria-label={`${fmtDate(day.date)}, ${labels[day.status]}`}
                   key={day.date}
                 >
@@ -144,27 +147,34 @@ function RoomCalendar({ roomId, guests }: { roomId: number; guests: number }) {
       </div>
 
       <div className="hg-calendar-footer">
-        <div className="hg-calendar-summary">
-          <span>
-            Ngày nhận: <b>{checkIn ? fmtDate(checkIn) : 'Chưa chọn'}</b>
-          </span>
-          <span>
-            Ngày trả: <b>{checkOut ? fmtDate(checkOut) : 'Chưa chọn'}</b>
-          </span>
-          {checkIn && checkOut && (
-            <strong>
-              {calculateNights(checkIn, checkOut)} đêm · {guests} khách
-            </strong>
-          )}
-        </div>
-        <button
-          type="button"
-          className="hg-btn hg-btn-gold"
-          disabled={!checkIn || !checkOut}
-          onClick={() => nav(`/booking?roomIds=${roomId}&checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`)}
-        >
-          Tiếp tục đặt phòng <ArrowRight size={17} aria-hidden="true" />
-        </button>
+        {guests < 1 ? (
+          <p className="hg-calendar-zero-note">Vui lòng chọn ít nhất 1 khách để chọn ngày đặt phòng</p>
+        ) : (
+          <>
+            <div className="hg-calendar-summary">
+              <span>
+                Ngày nhận: <b>{checkIn ? fmtDate(checkIn) : 'Chưa chọn'}</b>
+              </span>
+              <span>
+                Ngày trả: <b>{checkOut ? fmtDate(checkOut) : 'Chưa chọn'}</b>
+              </span>
+              {checkIn && checkOut && (
+                <strong className="hg-calendar-stay-meta">
+                  <span>{calculateNights(checkIn, checkOut)} đêm</span>
+                  <span>{guests} khách</span>
+                </strong>
+              )}
+            </div>
+            <button
+              type="button"
+              className="hg-btn hg-btn-gold"
+              disabled={!checkIn || !checkOut}
+              onClick={() => nav(`/booking?roomIds=${roomId}&checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`)}
+            >
+              Tiếp tục đặt phòng <ArrowRight size={17} aria-hidden="true" />
+            </button>
+          </>
+        )}
       </div>
     </section>
   )
@@ -175,13 +185,14 @@ export function RoomDetailPage() {
   const [searchParams] = useSearchParams()
   const checkIn = searchParams.get('checkIn') || undefined
   const checkOut = searchParams.get('checkOut') || undefined
-  const requestedGuests = Number(searchParams.get('guests') || 1)
+  const requestedGuestsParam = searchParams.get('guests')
+  const requestedGuests = requestedGuestsParam !== null ? Number(requestedGuestsParam) : 1
   const room = useQuery({
     queryKey: ['room', id],
     queryFn: () => request(api.get<ApiResponse<Room>>(`/rooms/${id}`)),
     enabled: Boolean(id),
   })
-  const [guests, setGuests] = useState(() => Math.max(1, requestedGuests))
+  const [guests, setGuests] = useState(() => (Number.isFinite(requestedGuests) ? Math.max(0, requestedGuests) : 1))
 
   if (room.isPending) {
     return (
@@ -204,7 +215,7 @@ export function RoomDetailPage() {
   }
 
   const r = room.data
-  const activeGuests = Math.max(1, Math.min(guests, r.capacity))
+  const activeGuests = Math.max(0, Math.min(guests, r.capacity))
   const amenities =
     r.amenities
       ?.split(',')
@@ -261,8 +272,8 @@ export function RoomDetailPage() {
                 <button
                   type="button"
                   aria-label="Bớt khách"
-                  disabled={activeGuests <= 1}
-                  onClick={() => setGuests(activeGuests - 1)}
+                  disabled={activeGuests <= 0}
+                  onClick={() => setGuests(Math.max(0, activeGuests - 1))}
                 >
                   <Minus size={14} />
                 </button>
@@ -271,16 +282,20 @@ export function RoomDetailPage() {
                   type="button"
                   aria-label="Thêm khách"
                   disabled={activeGuests >= r.capacity}
-                  onClick={() => setGuests(activeGuests + 1)}
+                  onClick={() => setGuests(Math.min(r.capacity, activeGuests + 1))}
                 >
                   <Plus size={14} />
                 </button>
               </div>
             </div>
 
-            <a className="hg-btn hg-btn-gold full-button" href="#room-calendar">
-              Chọn ngày trên lịch <ArrowRight size={16} aria-hidden="true" />
-            </a>
+            {activeGuests > 0 ? (
+              <a className="hg-btn hg-btn-gold full-button" href="#room-calendar">
+                Chọn ngày trên lịch <ArrowRight size={16} aria-hidden="true" />
+              </a>
+            ) : (
+              <p className="hg-aside-zero-note">Vui lòng chọn ít nhất 1 khách để đặt phòng</p>
+            )}
 
             <p className="hg-aside-trust">
               <ShieldCheck size={16} aria-hidden="true" />

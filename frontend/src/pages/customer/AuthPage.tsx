@@ -150,7 +150,7 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
             <p className="hg-serif-em">
               “Có những nơi khiến ta
               <br />
-              muốn <em>ở lại lâu hơn.”</em>
+              muốn <em>ở lại lâu hơn</em>”
             </p>
             <ul className="hg-auth-perks">
               <li>
@@ -167,7 +167,7 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
               </li>
             </ul>
           </div>
-          <small className="hg-auth-caption">Ảnh minh họa · Không gian nghỉ dưỡng Hoàng Gia</small>
+          <small className="hg-auth-caption">Không gian nghỉ dưỡng Hoàng Gia</small>
         </div>
       </section>
 
@@ -189,11 +189,11 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
             <h1 className="hg-serif-em">
               {mode === 'login' ? (
                 <>
-                  Thật vui khi <em>gặp lại.</em>
+                  Thật vui khi <em>gặp lại</em>
                 </>
               ) : (
                 <>
-                  Tạo tài khoản <em>của bạn.</em>
+                  Tạo tài khoản <em>của bạn</em>
                 </>
               )}
             </h1>

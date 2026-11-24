@@ -134,16 +134,30 @@ export function PublicLayout() {
               >
                 Đăng nhập
               </Link>
+            ) : user.role === 'ROLE_CUSTOMER' ? (
+              <Link
+                to="/my-bookings"
+                className="mobile-quick-login"
+                onClick={() => setOpen(false)}
+              >
+                Đặt phòng
+              </Link>
+            ) : user.role === 'ROLE_RECEPTIONIST' ? (
+              <Link
+                to="/reception"
+                className="mobile-quick-login"
+                onClick={() => setOpen(false)}
+              >
+                Lễ tân
+              </Link>
             ) : (
-              user.role === 'ROLE_CUSTOMER' && (
-                <Link
-                  to="/my-bookings"
-                  className="mobile-quick-login"
-                  onClick={() => setOpen(false)}
-                >
-                  Đặt phòng
-                </Link>
-              )
+              <Link
+                to="/admin"
+                className="mobile-quick-login"
+                onClick={() => setOpen(false)}
+              >
+                Quản trị
+              </Link>
             )}
             <button
               type="button"
@@ -235,6 +249,30 @@ export function PublicLayout() {
                         <strong>{profile?.fullName || user.fullName}</strong>
                         <small>{profile?.email || user.email}</small>
                       </div>
+                      {user.role === 'ROLE_RECEPTIONIST' && (
+                        <Link
+                          role="menuitem"
+                          to="/reception"
+                          onClick={() => {
+                            setAccountOpen(false)
+                            setOpen(false)
+                          }}
+                        >
+                          <LayoutDashboard size={18} /> Khu vực lễ tân
+                        </Link>
+                      )}
+                      {user.role === 'ROLE_ADMIN' && (
+                        <Link
+                          role="menuitem"
+                          to="/admin"
+                          onClick={() => {
+                            setAccountOpen(false)
+                            setOpen(false)
+                          }}
+                        >
+                          <LayoutDashboard size={18} /> Khu vực quản trị
+                        </Link>
+                      )}
                       {user.role === 'ROLE_CUSTOMER' && (
                         <Link
                           role="menuitem"
@@ -276,6 +314,16 @@ export function PublicLayout() {
                     </div>
                   </div>
                   <div className="mobile-account-links">
+                    {user.role === 'ROLE_RECEPTIONIST' && (
+                      <Link to="/reception" onClick={() => setOpen(false)}>
+                        <LayoutDashboard size={17} /> Khu vực lễ tân
+                      </Link>
+                    )}
+                    {user.role === 'ROLE_ADMIN' && (
+                      <Link to="/admin" onClick={() => setOpen(false)}>
+                        <LayoutDashboard size={17} /> Khu vực quản trị
+                      </Link>
+                    )}
                     <Link to="/profile" onClick={() => setOpen(false)}>
                       <UserRound size={17} /> Thông tin cá nhân
                     </Link>
@@ -394,7 +442,6 @@ type OpsNavItem = {
 
 function OpsSidebarShell({
   sidebarId,
-  eyebrow,
   sectionTitle,
   navAriaLabel,
   homePath,
@@ -404,7 +451,6 @@ function OpsSidebarShell({
   helpIcon: HelpIcon,
 }: {
   sidebarId: string
-  eyebrow: string
   sectionTitle: string
   navAriaLabel: string
   homePath: string
@@ -468,6 +514,9 @@ function OpsSidebarShell({
               <b>{helpSubtitle}</b>
             </span>
           </div>
+          <Link to="/" className="side-home-link" onClick={() => setOpen(false)}>
+            <Home size={16} /> Trang chủ khách sạn
+          </Link>
           <button type="button" onClick={logout} className="side-logout">
             <LogOut size={16} /> Đăng xuất
           </button>
@@ -486,11 +535,12 @@ function OpsSidebarShell({
             <Menu />
           </button>
           <div className="reception-top-title">
-            <span className="eyebrow">{eyebrow}</span>
             <h1>Chào {user?.fullName?.split(' ').slice(-1)[0] || 'bạn'}</h1>
           </div>
           <div className="top-user">
-            <div className="avatar">{user?.fullName?.charAt(0) || 'H'}</div>
+            <div className="avatar" aria-hidden="true">
+              <img src="/a_clean_icon_style_image_a_simple_white_user_pers.png" alt="" width={1536} height={1024} />
+            </div>
             <div>
               <b>{user?.fullName}</b>
               <span>{user?.role === 'ROLE_ADMIN' ? 'Quản trị viên' : 'Lễ tân'}</span>
@@ -575,7 +625,6 @@ export function ReceptionLayout() {
   return (
     <OpsSidebarShell
       sidebarId="reception-sidebar"
-      eyebrow="HOÀNG GIA · VẬN HÀNH"
       sectionTitle="VẬN HÀNH"
       navAriaLabel="Điều hướng lễ tân"
       homePath="/reception"
@@ -600,7 +649,6 @@ export function AdminLayout() {
   return (
     <OpsSidebarShell
       sidebarId="admin-sidebar"
-      eyebrow="HOÀNG GIA · QUẢN TRỊ"
       sectionTitle="QUẢN TRỊ HỆ THỐNG"
       navAriaLabel="Điều hướng quản trị"
       homePath="/admin"

@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
   ArrowRight,
-  ArrowUpRight,
   BedDouble,
   CalendarDays,
   Check,
@@ -28,21 +27,29 @@ type CancellationPreview = {
   refundAmount: number
 }
 
+function fmtWeekday(date: string) {
+  const raw = new Intl.DateTimeFormat('vi-VN', { weekday: 'long', timeZone: 'UTC' }).format(
+    new Date(`${date}T00:00:00Z`),
+  )
+  return raw.charAt(0).toUpperCase() + raw.slice(1)
+}
+
 function BookingPaymentTimeline({ booking }: { booking: Booking }) {
   const terminal = ['CANCELLED', 'REJECTED', 'EXPIRED', 'NO_SHOW'].includes(booking.status)
   if (terminal) {
     return (
       <div className="hg-panel hg-timeline-terminal">
         <div>
-          <span className="hg-kicker">TIẾN TRÌNH ĐƠN ĐẶT PHÒNG</span>
+          <span className="hg-kicker">Tiến trình đơn đặt phòng</span>
           <p>
             Đơn đặt phòng hiện ở trạng thái{' '}
-            <strong>{bookingStatusLabel[booking.status] || booking.status}</strong>.
+            <strong>{bookingStatusLabel[booking.status] || booking.status}</strong>
           </p>
         </div>
         <StatusBadge
           tone={bookingStatusTone[booking.status] || 'gray'}
           label={bookingStatusLabel[booking.status] || booking.status}
+          showDot={false}
         />
       </div>
     )
@@ -100,10 +107,11 @@ function BookingPaymentTimeline({ booking }: { booking: Booking }) {
   return (
     <section className="hg-panel hg-timeline-card" aria-label="Tiến trình đặt phòng và thanh toán">
       <div className="hg-timeline-head">
-        <span className="hg-kicker">TIẾN TRÌNH ĐẶT PHÒNG &amp; THANH TOÁN</span>
+        <span className="hg-kicker">Tiến trình đặt phòng và thanh toán</span>
         <StatusBadge
           tone={bookingStatusTone[booking.status] || 'gray'}
           label={bookingStatusLabel[booking.status] || booking.status}
+          showDot={false}
         />
       </div>
       <ol className="hg-timeline-steps">
@@ -205,6 +213,8 @@ export function BookingDetailPage() {
   const b = booking.data
   const canCancel = ['PENDING_DEPOSIT', 'PENDING_VERIFICATION', 'PENDING', 'CONFIRMED'].includes(b.status)
   const canInvoice = ['CHECKED_IN', 'COMPLETED', 'CHECKED_OUT'].includes(b.status)
+  const roomCount = b.rooms?.length || b.roomNumbers?.length || 0
+  const totalGuests = b.rooms?.reduce((sum, room) => sum + (room.guestCount || 0), 0) || 0
   const approvedServices =
     b.serviceOrders?.filter((service) => !service.cancelled && (service.approvalStatus || 'APPROVED') === 'APPROVED') ||
     []
@@ -220,21 +230,37 @@ export function BookingDetailPage() {
           <span>{b.bookingCode}</span>
         </div>
 
-        <header className="hg-booking-detail-head">
-          <div>
-            <span className="hg-kicker">CHI TIẾT ĐẶT PHÒNG</span>
+        <header className="hg-panel hg-booking-detail-head">
+          <div className="hg-booking-head-copy">
+            <span className="hg-kicker">Chi tiết đặt phòng</span>
             <h1 className="hg-serif-em">
-              Kỳ nghỉ <em>của bạn.</em>
+              Kỳ nghỉ <em>của bạn</em>
             </h1>
-            <p>
-              Mã đặt phòng <strong className="hg-mono">{b.bookingCode}</strong> · {b.numberOfNights} đêm ·{' '}
-              {b.rooms?.length || b.roomNumbers?.length || 0} phòng
+            <p className="hg-booking-head-meta">
+              <span className="hg-head-meta-item">
+                <span className="hg-head-meta-label">Mã đặt phòng</span>
+                <strong className="hg-head-code">{b.bookingCode}</strong>
+              </span>
+              <span className="hg-head-meta-item">
+                <span className="hg-head-meta-label">Thời gian</span>
+                <strong>{b.numberOfNights} đêm</strong>
+              </span>
+              <span className="hg-head-meta-item">
+                <span className="hg-head-meta-label">Quy mô</span>
+                <strong>
+                  {roomCount} phòng{totalGuests > 0 ? `, ${totalGuests} khách` : ''}
+                </strong>
+              </span>
             </p>
           </div>
-          <StatusBadge
-            tone={bookingStatusTone[b.status] || 'gray'}
-            label={bookingStatusLabel[b.status] || b.status}
-          />
+          <div className="hg-booking-head-status">
+            <span className="hg-head-status-label">Trạng thái đơn</span>
+            <StatusBadge
+              tone={bookingStatusTone[b.status] || 'gray'}
+              label={bookingStatusLabel[b.status] || b.status}
+              showDot={false}
+            />
+          </div>
         </header>
 
         <BookingPaymentTimeline booking={b} />
@@ -245,36 +271,53 @@ export function BookingDetailPage() {
             <RefundTrackingPanel bookingId={b.id} bookingStatus={b.status} />
             <RoomServiceOrder booking={b} />
 
-            <article className="hg-panel hg-detail-section-card">
+            <article className="hg-panel hg-detail-section-card hg-stay-itinerary-card">
               <div className="hg-detail-card-head">
                 <div>
-                  <span className="hg-kicker">LỊCH TRÌNH LƯU TRÚ</span>
-                  <h2>Ngày nhận &amp; trả phòng</h2>
+                  <span className="hg-kicker">Lịch trình lưu trú</span>
+                  <h2>Nhận phòng và trả phòng</h2>
                 </div>
                 <CalendarDays size={20} aria-hidden="true" />
               </div>
-              <div className="hg-date-summary">
-                <div>
-                  <span>NHẬN PHÒNG</span>
-                  <b>{fmtDate(b.checkInDate)}</b>
+
+              <div className="hg-stay-itinerary">
+                <div className="hg-stay-slot">
+                  <span className="hg-stay-slot-label">Nhận phòng</span>
+                  <strong className="hg-stay-slot-date">{fmtDate(b.checkInDate)}</strong>
+                  <span className="hg-stay-slot-sub">
+                    {b.checkedInAt ? `Đã nhận lúc ${fmtDateTime(b.checkedInAt)}` : `${fmtWeekday(b.checkInDate)}, từ 14:00`}
+                  </span>
                 </div>
-                <ArrowRight size={17} aria-hidden="true" />
-                <div>
-                  <span>TRẢ PHÒNG</span>
-                  <b>{fmtDate(b.checkOutDate)}</b>
+
+                <div className="hg-stay-slot is-checkout">
+                  <span className="hg-stay-slot-label">Trả phòng</span>
+                  <strong className="hg-stay-slot-date">{fmtDate(b.checkOutDate)}</strong>
+                  <span className="hg-stay-slot-sub">
+                    {b.checkedOutAt
+                      ? `Đã trả lúc ${fmtDateTime(b.checkedOutAt)}`
+                      : `${fmtWeekday(b.checkOutDate)}, trước 12:00`}
+                  </span>
                 </div>
-                <div>
-                  <span>THỜI GIAN</span>
-                  <b>{b.numberOfNights} đêm</b>
-                </div>
+              </div>
+
+              <div className="hg-stay-foot">
+                <span>
+                  Thời gian: <strong>{b.numberOfNights} đêm</strong>
+                </span>
+                <span>
+                  Khách lưu trú: <strong>{totalGuests > 0 ? `${totalGuests} khách` : 'Theo tiêu chuẩn phòng'}</strong>
+                </span>
+                <span>
+                  Số lượng phòng: <strong>{roomCount} phòng</strong>
+                </span>
               </div>
             </article>
 
             <article className="hg-panel hg-detail-section-card">
               <div className="hg-detail-card-head">
                 <div>
-                  <span className="hg-kicker">KHÔNG GIAN LƯU TRÚ</span>
-                  <h2>{b.rooms?.length || b.roomNumbers?.length || 0} phòng đã đặt</h2>
+                  <span className="hg-kicker">Không gian lưu trú</span>
+                  <h2>{roomCount} phòng đã đặt</h2>
                 </div>
                 <BedDouble size={20} aria-hidden="true" />
               </div>
@@ -293,10 +336,10 @@ export function BookingDetailPage() {
                         to={`/rooms/${room.roomId}`}
                         aria-label={`Xem chi tiết phòng ${room.roomNumber}`}
                       >
-                        Phòng {room.roomNumber} <ArrowUpRight size={14} aria-hidden="true" />
+                        Phòng {room.roomNumber}
                       </Link>
                       <span>
-                        {room.guestCount} khách · sức chứa tối đa {room.capacity} khách
+                        {room.guestCount} khách, tối đa {room.capacity} khách
                       </span>
                       <small>
                         {money(room.pricePerNight)} / đêm × {b.numberOfNights} đêm
@@ -314,7 +357,7 @@ export function BookingDetailPage() {
               <article className="hg-panel hg-detail-section-card hg-reason-card">
                 <div className="hg-detail-card-head">
                   <div>
-                    <span className="hg-kicker">CẬP NHẬT TỪ KHÁCH SẠN</span>
+                    <span className="hg-kicker">Cập nhật từ khách sạn</span>
                     <h2>Thông tin trạng thái</h2>
                   </div>
                   <CircleAlert size={20} aria-hidden="true" />
@@ -328,10 +371,10 @@ export function BookingDetailPage() {
               <article className="hg-panel hg-detail-section-card hg-invoice-card">
                 <div className="hg-detail-card-head">
                   <div>
-                    <span className="hg-kicker">TỔNG KẾT CHI PHÍ</span>
+                    <span className="hg-kicker">Tổng kết chi phí</span>
                     <h2>Hóa đơn lưu trú</h2>
                     <p className="hg-invoice-code">
-                      Mã đặt phòng: <strong className="hg-mono">{b.bookingCode}</strong>
+                      Mã đặt phòng: <strong className="hg-head-code">{b.bookingCode}</strong>
                     </p>
                   </div>
                   <ReceiptText size={20} aria-hidden="true" />
@@ -339,19 +382,19 @@ export function BookingDetailPage() {
 
                 <div className="hg-invoice-stay-dates">
                   <div>
-                    <span>ĐẶT PHÒNG TỪ NGÀY</span>
+                    <span>Đặt phòng từ ngày</span>
                     <b>{fmtDate(b.checkInDate)}</b>
                   </div>
                   <div>
-                    <span>ĐẾN NGÀY</span>
+                    <span>Đến ngày</span>
                     <b>{fmtDate(b.checkOutDate)}</b>
                   </div>
                   <div>
-                    <span>CHECK-IN THỰC TẾ</span>
+                    <span>Check-in thực tế</span>
                     <b>{fmtDateTime(b.checkedInAt)}</b>
                   </div>
                   <div>
-                    <span>CHECK-OUT THỰC TẾ</span>
+                    <span>Check-out thực tế</span>
                     <b>{fmtDateTime(b.checkedOutAt)}</b>
                   </div>
                 </div>
@@ -433,6 +476,7 @@ export function BookingDetailPage() {
                               ? 'Đã phát hành'
                               : 'Bản nháp'
                         }
+                        showDot={false}
                       />
                       <button
                         type="button"
@@ -449,7 +493,7 @@ export function BookingDetailPage() {
           </section>
 
           <aside className="hg-panel hg-booking-detail-aside">
-            <span className="hg-kicker">TÓM TẮT CHI PHÍ</span>
+            <span className="hg-kicker">Tóm tắt chi phí</span>
             <div className="hg-detail-aside-total">
               <b>{money(b.estimatedTotal)}</b>
               <span>Chi phí dự kiến theo đơn</span>
@@ -484,7 +528,7 @@ export function BookingDetailPage() {
                 {approvedServices.map((service, index) => (
                   <div key={service.id || `${service.name}-${index}`}>
                     <span>
-                      {service.roomNumber ? `Phòng ${service.roomNumber} · ` : ''}
+                      {service.roomNumber ? `Phòng ${service.roomNumber} — ` : ''}
                       {service.name} × {service.quantity} {service.unit}
                     </span>
                     <b>{money(service.subTotal)}</b>
@@ -493,7 +537,7 @@ export function BookingDetailPage() {
               </div>
             )}
 
-            <p className="hg-summary-note">Hóa đơn và khoản thanh toán cuối cùng do khách sạn cập nhật.</p>
+            <p className="hg-summary-note">Hóa đơn và khoản thanh toán cuối cùng do khách sạn cập nhật</p>
 
             {canCancel && (
               <button

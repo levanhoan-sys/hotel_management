@@ -399,6 +399,26 @@
   }
   .customer-site .account-menu { flex: 0 1 auto; min-width: 0; }
   .customer-site .account-trigger { width: 100%; }
+  .customer-site .main-nav .nav-secondary {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 0 13px;
+    margin-left: 0;
+    border: 1px solid #bccabc;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #173d2b;
+    font: 700 13px "DM Sans", sans-serif;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: background-color .18s ease, border-color .18s ease, color .18s ease;
+  }
+  .customer-site .main-nav .nav-secondary:hover {
+    background: #f1ebdf;
+    border-color: #a87b36;
+    color: #173d2b;
+  }
 }
 
 /* Footer layout: keep the map directly beneath the address at every width. */

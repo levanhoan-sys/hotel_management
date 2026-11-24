@@ -805,7 +805,7 @@ export class HotelStore {
       const rt = room ? this.roomTypes.find((t) => t.id === room.roomTypeId) : undefined
       const roomNumber = room?.roomNumber ?? ''
       roomNumbers.push(roomNumber)
-      roomImageUrls.push(rt?.imageUrl ?? null)
+      roomImageUrls.push(room?.imageUrls?.[0] ?? rt?.imageUrl ?? rt?.imageUrls?.[0] ?? null)
       return {
         roomId: d.roomId,
         roomNumber,
