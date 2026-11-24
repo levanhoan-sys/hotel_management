@@ -5,19 +5,21 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowRight,
   BedDouble,
+  CalendarDays,
   Check,
   ChevronLeft,
   ChevronRight,
   CircleAlert,
   ClipboardCheck,
   DoorOpen,
+  Download,
   FileText,
   KeyRound,
   Plus,
+  Printer,
   ReceiptText,
   Search,
   ShieldCheck,
-  Sparkles,
   Users,
   X,
 } from 'lucide-react'
@@ -26,6 +28,7 @@ import { Dialog } from '../components/ui/dialog'
 import { ConfirmDialog } from '../components/shared/ConfirmDialog'
 import { MoneyInput } from '../components/MoneyInput'
 import { api, errorMessage, request } from '../lib/api'
+import { downloadPrintableInvoice, localizeInvoiceItemDescription, tryNativePrint } from '../lib/invoice-print'
 import type {
   ApiResponse,
   Booking,
@@ -43,7 +46,7 @@ import './reception-overview.css'
 const money = (v: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(v)
 
-function useFourRowTableScroll(rowCount: number) {
+function useFourRowTableScroll(rowCount: number, maxRows = 4) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
@@ -53,17 +56,17 @@ function useFourRowTableScroll(rowCount: number) {
     const updateHeight = () => {
       const thead = container.querySelector('thead')
       const rows = Array.from(container.querySelectorAll('tbody tr'))
-      if (rows.length <= 4) {
+      if (rows.length <= maxRows) {
         container.style.maxHeight = ''
         return
       }
       const headerHeight = thead ? thead.getBoundingClientRect().height : 0
-      const fourRowsHeight = rows
-        .slice(0, 4)
+      const visibleRowsHeight = rows
+        .slice(0, maxRows)
         .reduce((sum, row) => sum + row.getBoundingClientRect().height, 0)
-      if (headerHeight <= 0 && fourRowsHeight <= 0) return
+      if (headerHeight <= 0 && visibleRowsHeight <= 0) return
       const horizontalScrollbar = Math.max(0, container.offsetHeight - container.clientHeight)
-      container.style.maxHeight = `${Math.floor(headerHeight + fourRowsHeight) + horizontalScrollbar}px`
+      container.style.maxHeight = `${Math.floor(headerHeight + visibleRowsHeight) + horizontalScrollbar}px`
     }
 
     updateHeight()
@@ -74,7 +77,7 @@ function useFourRowTableScroll(rowCount: number) {
     const table = container.querySelector('table')
     if (table) observer.observe(table)
     return () => observer.disconnect()
-  }, [rowCount])
+  }, [rowCount, maxRows])
 
   return scrollRef
 }
@@ -278,7 +281,20 @@ function useInvalidate() {
   }
 }
 
+type OverviewScheduleTab = 'arrivals' | 'departures' | 'pending'
+type OverviewRoomTone = 'ALL' | 'ready' | 'occupied' | 'cleaning' | 'maintenance'
+
+function roomTone(status: RoomStatus): Exclude<OverviewRoomTone, 'ALL'> {
+  if (status === 'OCCUPIED') return 'occupied'
+  if (status === 'CLEANING') return 'cleaning'
+  if (status === 'MAINTENANCE') return 'maintenance'
+  return 'ready'
+}
+
 export function ReceptionHome() {
+  const [scheduleTab, setScheduleTab] = useState<OverviewScheduleTab>('arrivals')
+  const [roomFilter, setRoomFilter] = useState<OverviewRoomTone>('ALL')
+
   const summary = useQuery({
     queryKey: ['summary'],
     queryFn: () => request(api.get<ApiResponse<Summary>>('/reception/summary')),
@@ -287,26 +303,54 @@ export function ReceptionHome() {
     queryKey: ['ops-bookings'],
     queryFn: () => request(api.get<ApiResponse<Booking[]>>('/reception/bookings')),
   })
+  const roomList = useQuery({
+    queryKey: ['ops-rooms'],
+    queryFn: () => request(api.get<ApiResponse<Room[]>>('/reception/rooms')),
+  })
+  const pendingDeposits = useQuery({
+    queryKey: ['reception-deposits'],
+    queryFn: () => request(api.get<ApiResponse<Booking[]>>('/reception/deposits/pending')),
+  })
+  const pendingServices = useQuery({
+    queryKey: ['ops-pending-service-usages'],
+    queryFn: () => request(api.get<ApiResponse<ServiceUsage[]>>('/reception/service-usages/pending')),
+  })
+
   const totals = summary.data
   const data = bookings.data || []
+  const allRooms = roomList.data || []
+  const depositQueue = pendingDeposits.data || []
+  const serviceQueue = pendingServices.data || []
   const today = dateValue(new Date())
+
   const arrivals = data.filter((b) => b.checkInDate === today && b.status === 'CONFIRMED')
   const departures = data.filter((b) => b.checkOutDate === today && b.status === 'CHECKED_IN')
-  const pending = data.filter((b) => b.status === 'PENDING')
-  const tasks = [
-    { name: 'Nhận phòng hôm nay', count: arrivals.length, to: 'check-in', icon: KeyRound },
-    { name: 'Trả phòng hôm nay', count: departures.length, to: 'check-out', icon: DoorOpen },
-    { name: 'Đơn chờ xác nhận', count: pending.length, to: 'bookings', icon: ClipboardCheck },
-  ]
-  const rooms = totals
+  const pendingBookings = data.filter((b) => b.status === 'PENDING')
+  const pendingActionCount = pendingBookings.length + depositQueue.length + serviceQueue.length
+
+  const occupancyPct = totals && totals.totalRooms > 0
+    ? Math.round((totals.occupiedRooms / totals.totalRooms) * 100)
+    : 0
+
+  const roomStatusCards: Array<{
+    name: string
+    count: number
+    tone: Exclude<OverviewRoomTone, 'ALL'>
+  }> = totals
     ? [
-        { name: 'Sẵn sàng', count: totals.availableRooms, icon: DoorOpen, tone: 'ready' },
-        { name: 'Đang lưu trú', count: totals.occupiedRooms, icon: Users, tone: 'occupied' },
-        { name: 'Đang dọn', count: totals.cleaningRooms, icon: Sparkles, tone: 'cleaning' },
-        { name: 'Bảo trì', count: totals.maintenanceRooms, icon: CircleAlert, tone: 'maintenance' },
+        { name: 'Sẵn sàng', count: totals.availableRooms, tone: 'ready' },
+        { name: 'Đang lưu trú', count: totals.occupiedRooms, tone: 'occupied' },
+        { name: 'Đang dọn', count: totals.cleaningRooms, tone: 'cleaning' },
+        { name: 'Bảo trì', count: totals.maintenanceRooms, tone: 'maintenance' },
       ]
     : []
-  const recent = [...data].sort((a, b) => b.id - a.id).slice(0, 5)
+
+  const filteredRooms = [...allRooms]
+    .sort((a, b) => a.roomNumber.localeCompare(b.roomNumber, 'vi', { numeric: true }))
+    .filter((room) => roomFilter === 'ALL' || roomTone(room.status) === roomFilter)
+
+  const recent = [...data].sort((a, b) => b.id - a.id).slice(0, 6)
+
   const recentBookingTarget = (booking: Booking) => {
     if (booking.status === 'PENDING_VERIFICATION') return `/reception/deposits?bookingId=${booking.id}`
     if (booking.status === 'CONFIRMED') return `/reception/check-in?bookingId=${booking.id}`
@@ -314,50 +358,271 @@ export function ReceptionHome() {
     return `/reception/bookings?search=${encodeURIComponent(booking.bookingCode)}`
   }
 
+  const pendingItems = [
+    ...depositQueue.map((booking) => ({
+      id: `deposit-${booking.id}`,
+      title: `${booking.customerName} · Đối chiếu tiền cọc`,
+      detail: `${booking.bookingCode} · ${money(booking.depositAmount ?? 0)}`,
+      badge: 'Chờ xác minh cọc',
+      tone: 'amber',
+      to: `/reception/deposits?bookingId=${booking.id}`,
+      cta: 'Đối chiếu',
+    })),
+    ...pendingBookings.map((booking) => ({
+      id: `booking-${booking.id}`,
+      title: `${booking.customerName} · Đơn chờ xác nhận`,
+      detail: `${booking.bookingCode} · Phòng ${booking.roomNumbers?.join(', ') || 'Chưa gán'} · ${date(booking.checkInDate)}`,
+      badge: 'Chờ xác nhận',
+      tone: 'amber',
+      to: `/reception/bookings?search=${encodeURIComponent(booking.bookingCode)}`,
+      cta: 'Xem đơn',
+    })),
+    ...serviceQueue.map((usage) => ({
+      id: `service-${usage.id}`,
+      title: `${usage.serviceName} · ${usage.customerName}`,
+      detail: `${usage.bookingCode}${usage.roomNumber ? ` · Phòng ${usage.roomNumber}` : ''} · ${usage.quantity} ${usage.unit}`,
+      badge: 'Dịch vụ chờ duyệt',
+      tone: 'blue',
+      to: '/reception/services',
+      cta: 'Duyệt ngay',
+    })),
+  ]
+
   return (
     <div className="ops-page reception-overview">
       <header className="overview-header">
-        <div>
-          <p>Ca lễ tân — Hoàng Gia Hotel</p>
+        <div className="overview-header-copy">
+          <span className="overview-kicker">Ca lễ tân · Hoàng Gia Hotel</span>
           <h1>Tổng quan vận hành</h1>
-          <time dateTime={today}>{new Intl.DateTimeFormat('vi-VN', { dateStyle: 'full' }).format(new Date())}</time>
+          <div className="overview-header-meta">
+            <time dateTime={today}>
+              {new Intl.DateTimeFormat('vi-VN', { dateStyle: 'full' }).format(new Date())}
+            </time>
+            <span aria-hidden="true">·</span>
+            <span>{data.length} hồ sơ đặt phòng đang theo dõi</span>
+          </div>
         </div>
-        <Link to="/reception/bookings">
-          <ClipboardCheck size={18} /> Quản lý đặt phòng <ArrowRight size={16} />
-        </Link>
+        <div className="overview-header-actions">
+          <Link to="/reception/calendar" className="overview-btn-secondary">
+            <CalendarDays size={18} aria-hidden="true" /> Lịch phòng
+          </Link>
+          <Link to="/reception/bookings" className="overview-btn-primary">
+            <ClipboardCheck size={18} aria-hidden="true" /> Quản lý đặt phòng <ArrowRight size={17} aria-hidden="true" />
+          </Link>
+        </div>
       </header>
 
-      <div className="overview-grid">
-        <section className="overview-panel overview-tasks" aria-labelledby="overview-tasks-title">
-          <header>
-            <h2 id="overview-tasks-title">Việc cần xử lý</h2>
-            <p>Nhận phòng, trả phòng và xác nhận đơn</p>
-          </header>
+      <section className="overview-kpi-grid" aria-label="Chỉ số vận hành trong ngày">
+        <article className="overview-kpi-card">
+          <div className="overview-kpi-head">
+            <span className="overview-kpi-label">Công suất phòng</span>
+            <span className="overview-kpi-icon">
+              <BedDouble size={20} aria-hidden="true" />
+            </span>
+          </div>
+          <p className="overview-kpi-value">{summary.isPending ? '—' : `${occupancyPct}%`}</p>
+          <p className="overview-kpi-meta">
+            {totals
+              ? `${totals.occupiedRooms}/${totals.totalRooms} phòng đang có khách · ${totals.availableRooms} sẵn sàng`
+              : 'Đang cập nhật số liệu phòng'}
+          </p>
+        </article>
+
+        <article className="overview-kpi-card">
+          <div className="overview-kpi-head">
+            <span className="overview-kpi-label">Khách đến &amp; đi hôm nay</span>
+            <span className="overview-kpi-icon" data-tone="blue">
+              <KeyRound size={20} aria-hidden="true" />
+            </span>
+          </div>
+          <p className="overview-kpi-value">
+            {bookings.isPending ? '—' : `${arrivals.length} đến / ${departures.length} đi`}
+          </p>
+          <p className="overview-kpi-meta">
+            {bookings.isPending
+              ? 'Đang tải lịch lưu trú hôm nay'
+              : `${totals?.checkedInBookings ?? 0} đơn đang lưu trú tại khách sạn`}
+          </p>
+        </article>
+
+        <article className="overview-kpi-card">
+          <div className="overview-kpi-head">
+            <span className="overview-kpi-label">Hồ sơ chờ xử lý</span>
+            <span className="overview-kpi-icon" data-tone="amber">
+              <ShieldCheck size={20} aria-hidden="true" />
+            </span>
+          </div>
+          <p className="overview-kpi-value">{bookings.isPending ? '—' : pendingActionCount}</p>
+          <p className="overview-kpi-meta">
+            {pendingBookings.length} đơn đặt · {depositQueue.length} tiền cọc · {serviceQueue.length} dịch vụ
+          </p>
+        </article>
+
+        <article className="overview-kpi-card is-revenue">
+          <div className="overview-kpi-head">
+            <span className="overview-kpi-label">Doanh thu đã thanh toán</span>
+            <span className="overview-kpi-icon" data-tone="gold">
+              <FileText size={20} aria-hidden="true" />
+            </span>
+          </div>
+          <p className="overview-kpi-value">
+            {summary.isPending ? '—' : summary.isError || !totals ? 'Chưa tải được' : money(totals.revenue)}
+          </p>
+          <Link to="/reception/invoices" className="overview-kpi-link">
+            Xem danh sách hóa đơn <ArrowRight size={16} aria-hidden="true" />
+          </Link>
+        </article>
+      </section>
+
+      <div className="overview-main-grid">
+        <section className="overview-panel overview-schedule-panel" aria-labelledby="overview-schedule-title">
+          <div className="overview-panel-head">
+            <div>
+              <h2 id="overview-schedule-title">Điều phối trong ngày</h2>
+              <p className="overview-panel-desc">Theo dõi nhận phòng, trả phòng và các yêu cầu cần lễ tân xử lý.</p>
+            </div>
+            <Link to="/reception/check-in" className="overview-action-link">
+              Quầy thủ tục <ArrowRight size={16} aria-hidden="true" />
+            </Link>
+          </div>
+
+          <div className="overview-tabs" role="tablist" aria-label="Phân loại công việc lễ tân">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={scheduleTab === 'arrivals'}
+              className={`overview-tab-btn ${scheduleTab === 'arrivals' ? 'is-active' : ''}`}
+              onClick={() => setScheduleTab('arrivals')}
+            >
+              <span>Nhận phòng</span>
+              <span className="overview-tab-count">{arrivals.length}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={scheduleTab === 'departures'}
+              className={`overview-tab-btn ${scheduleTab === 'departures' ? 'is-active' : ''}`}
+              onClick={() => setScheduleTab('departures')}
+            >
+              <span>Trả phòng</span>
+              <span className="overview-tab-count">{departures.length}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={scheduleTab === 'pending'}
+              className={`overview-tab-btn ${scheduleTab === 'pending' ? 'is-active' : ''}`}
+              onClick={() => setScheduleTab('pending')}
+            >
+              <span>Chờ xử lý</span>
+              <span className="overview-tab-count">{pendingActionCount}</span>
+            </button>
+          </div>
+
           {bookings.isPending ? (
             <LoadingRows count={3} />
           ) : bookings.isError ? (
             <ErrorPanel error={bookings.error} retry={() => void bookings.refetch()} />
-          ) : (
-            <div className="overview-task-list">
-              {tasks.map(({ name, count, to, icon: Icon }) => (
-                <Link key={to} to={'/reception/' + to} className="overview-task">
-                  <Icon size={20} />
-                  <span>{name}</span>
-                  <strong>{count}</strong>
-                  <ChevronRight size={16} aria-hidden="true" />
-                </Link>
+          ) : scheduleTab === 'arrivals' ? (
+            arrivals.length ? (
+              <ul className="overview-schedule-list">
+                {arrivals.map((booking) => (
+                  <li key={booking.id}>
+                    <Link to={`/reception/check-in?bookingId=${booking.id}`} className="overview-schedule-row">
+                      <span className="overview-schedule-main">
+                        <strong>{booking.customerName}</strong>
+                        <small>
+                          {booking.bookingCode} · Phòng {booking.roomNumbers?.join(', ') || 'Chưa gán'} · {booking.numberOfNights} đêm
+                        </small>
+                      </span>
+                      <span className="status-badge green">Đã xác nhận</span>
+                      <span className="overview-row-cta">
+                        Nhận phòng <ChevronRight size={17} aria-hidden="true" />
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="overview-empty">
+                <p>Chưa có lượt nhận phòng nào được lên lịch trong hôm nay.</p>
+              </div>
+            )
+          ) : scheduleTab === 'departures' ? (
+            departures.length ? (
+              <ul className="overview-schedule-list">
+                {departures.map((booking) => (
+                  <li key={booking.id}>
+                    <Link to={`/reception/check-out?bookingId=${booking.id}`} className="overview-schedule-row">
+                      <span className="overview-schedule-main">
+                        <strong>{booking.customerName}</strong>
+                        <small>
+                          {booking.bookingCode} · Phòng {booking.roomNumbers?.join(', ') || '—'} · Dự kiến {money(booking.estimatedTotal)}
+                        </small>
+                      </span>
+                      <span className="status-badge blue">Đang lưu trú</span>
+                      <span className="overview-row-cta">
+                        Trả phòng <ChevronRight size={17} aria-hidden="true" />
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="overview-empty">
+                <p>Không có phòng nào đến hạn trả phòng trong hôm nay.</p>
+              </div>
+            )
+          ) : pendingItems.length ? (
+            <ul className="overview-schedule-list">
+              {pendingItems.slice(0, 6).map((item) => (
+                <li key={item.id}>
+                  <Link to={item.to} className="overview-schedule-row">
+                    <span className="overview-schedule-main">
+                      <strong>{item.title}</strong>
+                      <small>{item.detail}</small>
+                    </span>
+                    <span className={`status-badge ${item.tone}`}>{item.badge}</span>
+                    <span className="overview-row-cta">
+                      {item.cta} <ChevronRight size={17} aria-hidden="true" />
+                    </span>
+                  </Link>
+                </li>
               ))}
+            </ul>
+          ) : (
+            <div className="overview-empty">
+              <p>Tất cả đơn đặt phòng, tiền cọc và yêu cầu dịch vụ đã được xử lý.</p>
             </div>
           )}
+
+          <div className="overview-quick-strip">
+            <Link to="/reception/check-in" className="overview-task-pill">
+              <span>Nhận phòng</span>
+              <strong>{arrivals.length}</strong>
+            </Link>
+            <Link to="/reception/check-out" className="overview-task-pill">
+              <span>Trả phòng</span>
+              <strong>{departures.length}</strong>
+            </Link>
+            <Link to="/reception/deposits" className="overview-task-pill">
+              <span>Xác minh cọc</span>
+              <strong>{depositQueue.length}</strong>
+            </Link>
+          </div>
         </section>
 
-        <section className="overview-panel overview-rooms" aria-labelledby="overview-rooms-title">
-          <header>
-            <h2 id="overview-rooms-title">Tình trạng phòng</h2>
-            <Link to="/reception/rooms">
-              Quản lý phòng <ArrowRight size={15} />
+        <section className="overview-panel overview-rooms-panel" aria-labelledby="overview-rooms-title">
+          <div className="overview-panel-head">
+            <div>
+              <h2 id="overview-rooms-title">Tình trạng phòng trực tiếp</h2>
+              <p className="overview-panel-desc">Nhấp vào từng trạng thái để lọc nhanh sơ đồ phòng.</p>
+            </div>
+            <Link to="/reception/rooms" className="overview-action-link">
+              Quản lý phòng <ArrowRight size={16} aria-hidden="true" />
             </Link>
-          </header>
+          </div>
+
           {summary.isPending ? (
             <LoadingRows count={2} />
           ) : summary.isError ? (
@@ -365,11 +630,15 @@ export function ReceptionHome() {
           ) : (
             totals && (
               <>
-                <div className="overview-room-total">
-                  <strong>{totals.totalRooms}</strong> phòng toàn khách sạn
+                <div className="overview-room-summary">
+                  <div className="overview-room-total">
+                    <strong>{totals.totalRooms}</strong> phòng toàn khách sạn
+                  </div>
+                  <span className="overview-occupancy-note">Công suất hiện tại: {occupancyPct}%</span>
                 </div>
+
                 <div className="overview-room-bar" aria-hidden="true">
-                  {rooms
+                  {roomStatusCards
                     .filter((room) => room.count > 0)
                     .map((room) => (
                       <span
@@ -379,71 +648,148 @@ export function ReceptionHome() {
                       />
                     ))}
                 </div>
+
                 <div className="overview-room-stats">
-                  {rooms.map(({ name, count, icon: Icon, tone }) => (
-                    <div key={tone} data-tone={tone}>
-                      <Icon size={18} />
-                      <strong>{count}</strong>
-                      <span>{name}</span>
-                    </div>
-                  ))}
+                  {roomStatusCards.map(({ name, count, tone }) => {
+                    const isSelected = roomFilter === tone
+                    return (
+                      <button
+                        key={tone}
+                        type="button"
+                        data-tone={tone}
+                        aria-pressed={isSelected}
+                        className={`overview-room-stat-btn ${isSelected ? 'is-selected' : ''}`}
+                        onClick={() => setRoomFilter((prev) => (prev === tone ? 'ALL' : tone))}
+                      >
+                        <strong>{count}</strong>
+                        <span>{name}</span>
+                      </button>
+                    )
+                  })}
                 </div>
               </>
             )
           )}
-        </section>
 
-        <section className="overview-panel overview-recent" aria-labelledby="overview-recent-title">
-          <header>
-            <h2 id="overview-recent-title">Đặt phòng gần đây</h2>
-            <Link to="/reception/bookings">
-              Xem tất cả <ArrowRight size={15} />
-            </Link>
-          </header>
-          {bookings.isPending ? (
-            <LoadingRows count={3} />
-          ) : bookings.isError ? (
-            <ErrorPanel error={bookings.error} retry={() => void bookings.refetch()} />
-          ) : recent.length ? (
-            <ul className="overview-bookings">
-              {recent.map((booking) => (
-                <li key={booking.id}>
-                  <Link to={recentBookingTarget(booking)} className="overview-booking-link">
-                    <span>
-                      <strong>{booking.customerName}</strong>
-                      <small>
-                        {booking.bookingCode} — {booking.roomNumbers?.length || 0} phòng
-                      </small>
-                    </span>
-                    <span className={'status-badge ' + statusTone(booking.status)}>
-                      {bookingNames[booking.status] || booking.status}
-                    </span>
-                    <ChevronRight size={16} aria-hidden="true" />
+          <div className="overview-room-board-head">
+            <span>
+              Sơ đồ phòng ({filteredRooms.length} phòng)
+            </span>
+            {roomFilter !== 'ALL' && (
+              <button
+                type="button"
+                className="overview-clear-filter"
+                onClick={() => setRoomFilter('ALL')}
+              >
+                Hiện tất cả
+              </button>
+            )}
+          </div>
+
+          {roomList.isPending ? (
+            <LoadingRows count={2} />
+          ) : roomList.isError ? (
+            <ErrorPanel error={roomList.error} retry={() => void roomList.refetch()} />
+          ) : filteredRooms.length ? (
+            <div className="overview-room-board">
+              {filteredRooms.slice(0, 9).map((room) => {
+                const tone = roomTone(room.status)
+                return (
+                  <Link key={room.id} to="/reception/rooms" className="overview-room-tile" data-tone={tone}>
+                    <div className="overview-room-tile-top">
+                      <strong>P.{room.roomNumber}</strong>
+                      <span className="overview-room-state">{roomNames[room.status] || room.status}</span>
+                    </div>
+                    <small>
+                      {room.roomTypeName} · Tầng {room.floor}
+                    </small>
                   </Link>
-                </li>
-              ))}
-            </ul>
+                )
+              })}
+            </div>
           ) : (
-            <p>Chưa có dữ liệu đặt phòng</p>
+            <div className="overview-empty">
+              <p>Không có phòng nào thuộc trạng thái đang chọn.</p>
+            </div>
           )}
-        </section>
-
-        <section className="overview-panel overview-revenue" aria-labelledby="overview-revenue-title">
-          <FileText size={24} aria-hidden="true" />
-          <h2 id="overview-revenue-title">Doanh thu đã thanh toán</h2>
-          {summary.isPending ? (
-            <LoadingRows count={1} />
-          ) : summary.isError ? (
-            <p>Chưa tải được doanh thu</p>
-          ) : (
-            totals && <strong>{money(totals.revenue)}</strong>
-          )}
-          <p>Tổng giá trị hóa đơn đã thanh toán</p>
-          <Link to="/reception/invoices">
-            Xem hóa đơn <ArrowRight size={15} />
-          </Link>
         </section>
       </div>
+
+      <section className="overview-panel overview-recent-panel" aria-labelledby="overview-recent-title">
+        <div className="overview-panel-head">
+          <div>
+            <h2 id="overview-recent-title">Đặt phòng gần đây</h2>
+            <p className="overview-panel-desc">Cập nhật chi tiết 6 hồ sơ đặt phòng mới nhất trong hệ thống.</p>
+          </div>
+          <Link to="/reception/bookings" className="overview-action-link">
+            Xem tất cả đặt phòng <ArrowRight size={16} aria-hidden="true" />
+          </Link>
+        </div>
+
+        {bookings.isPending ? (
+          <LoadingRows count={4} />
+        ) : bookings.isError ? (
+          <ErrorPanel error={bookings.error} retry={() => void bookings.refetch()} />
+        ) : recent.length ? (
+          <div className="overview-table-wrap">
+            <table className="overview-recent-table">
+              <thead>
+                <tr>
+                  <th>Mã đơn</th>
+                  <th>Khách hàng</th>
+                  <th>Phòng</th>
+                  <th>Lưu trú</th>
+                  <th>Tổng dự kiến</th>
+                  <th>Trạng thái</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recent.map((booking) => (
+                  <tr key={booking.id}>
+                    <td>
+                      <span className="overview-code">{booking.bookingCode}</span>
+                    </td>
+                    <td>
+                      <strong>{booking.customerName}</strong>
+                      <span className="overview-cell-sub">
+                        {booking.rooms?.reduce((sum, r) => sum + r.guestCount, 0) || 1} khách
+                      </span>
+                    </td>
+                    <td>
+                      <strong>{booking.roomNumbers?.length ? booking.roomNumbers.join(', ') : 'Chưa gán'}</strong>
+                      <span className="overview-cell-sub">{booking.roomNumbers?.length || 0} phòng</span>
+                    </td>
+                    <td>
+                      <span>
+                        {date(booking.checkInDate)} → {date(booking.checkOutDate)}
+                      </span>
+                      <span className="overview-cell-sub">{booking.numberOfNights} đêm</span>
+                    </td>
+                    <td>
+                      <span className="overview-money">{money(booking.estimatedTotal)}</span>
+                    </td>
+                    <td>
+                      <span className={'status-badge ' + statusTone(booking.status)}>
+                        {bookingNames[booking.status] || booking.status}
+                      </span>
+                    </td>
+                    <td>
+                      <Link to={recentBookingTarget(booking)} className="overview-row-cta">
+                        Chi tiết <ChevronRight size={16} aria-hidden="true" />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="overview-empty">
+            <p>Chưa có dữ liệu đặt phòng nào được ghi nhận.</p>
+          </div>
+        )}
+      </section>
     </div>
   )
 }
@@ -2654,6 +3000,8 @@ function ServicesManagement() {
       ),
     onSuccess: async () => {
       toast.success('Đã thêm dịch vụ vào booking')
+      setServiceItemId('')
+      setQuantity('1')
       await queryClient.invalidateQueries({ queryKey: ['service-usages', bookingId] })
       await queryClient.invalidateQueries({ queryKey: ['ops-bookings'] })
     },
@@ -2670,6 +3018,8 @@ function ServicesManagement() {
     },
     onError: (e) => toast.error(errorMessage(e)),
   })
+
+  const serviceTableScrollRef = useFourRowTableScroll(services.data?.length ?? 0, 6)
 
   return (
     <div className="ops-page">
@@ -2698,88 +3048,121 @@ function ServicesManagement() {
           <div>
             <span className="section-kicker">PHÁT SINH TRONG KỲ LƯU TRÚ</span>
             <h3>Ghi nhận dịch vụ</h3>
+            <p className="panel-sub-note">
+              Thêm dịch vụ phát sinh (giặt ủi, ăn uống, đưa đón…) trực tiếp vào hóa đơn của khách đang lưu trú.
+            </p>
           </div>
-          <span className="live-pill">Chỉ booking đang lưu trú</span>
+          <span className="live-pill">
+            {bookings.isPending ? 'Đang tải booking…' : `${checkedInBookings.length} booking đang lưu trú`}
+          </span>
         </div>
 
         {bookings.isError ? (
           <ErrorPanel error={bookings.error} retry={() => void bookings.refetch()} />
         ) : (
-          <form
-            className="usage-form"
-            onSubmit={(e) => {
-              e.preventDefault()
-              if (!bookingId || !activeBookingRoom?.bookingRoomId || !serviceItemId || Number(quantity) < 1) {
-                return toast.error('Chọn booking, phòng, dịch vụ và số lượng hợp lệ')
-              }
-              addUsage.mutate()
-            }}
-          >
-            <label className="form-field">
-              <span>Booking</span>
-              <select
-                required
-                value={bookingId}
-                onChange={(e) => {
-                  setBookingId(e.target.value)
-                  setBookingRoomId('')
-                }}
-              >
-                <option value="">Chọn khách đang lưu trú</option>
-                {checkedInBookings.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.bookingCode} — {b.customerName}
+          <>
+            <form
+              className="usage-form"
+              noValidate
+              onSubmit={(e) => {
+                e.preventDefault()
+                if (!checkedInBookings.length) {
+                  return toast.error('Hiện chưa có booking nào đang lưu trú (đã nhận phòng).')
+                }
+                if (!bookingId || !activeBookingRoom?.bookingRoomId) {
+                  return toast.error('Vui lòng chọn booking và phòng đang lưu trú.')
+                }
+                if (!serviceItemId) {
+                  return toast.error('Vui lòng chọn dịch vụ muốn thêm.')
+                }
+                if (!Number.isInteger(Number(quantity)) || Number(quantity) < 1) {
+                  return toast.error('Số lượng phải là số nguyên từ 1 trở lên.')
+                }
+                addUsage.mutate()
+              }}
+            >
+              <label className="form-field">
+                <span>Booking</span>
+                <select
+                  value={bookingId}
+                  disabled={bookings.isPending || !checkedInBookings.length}
+                  onChange={(e) => {
+                    setBookingId(e.target.value)
+                    setBookingRoomId('')
+                  }}
+                >
+                  <option value="">
+                    {bookings.isPending
+                      ? 'Đang tải booking…'
+                      : checkedInBookings.length
+                        ? 'Chọn khách đang lưu trú'
+                        : 'Chưa có khách đang lưu trú'}
                   </option>
-                ))}
-              </select>
-            </label>
-            <label className="form-field">
-              <span>Phòng trong booking</span>
-              <select
-                required
-                value={activeRoomId}
-                onChange={(e) => setBookingRoomId(e.target.value)}
-                disabled={!activeBooking}
-              >
-                <option value="">Chọn phòng</option>
-                {activeBooking?.rooms?.map((r) => (
-                  <option key={r.roomId} value={r.roomId}>
-                    Phòng {r.roomNumber}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="form-field">
-              <span>Dịch vụ</span>
-              <select required value={serviceItemId} onChange={(e) => setServiceItemId(e.target.value)}>
-                <option value="">Chọn dịch vụ</option>
-                {services.data
-                  ?.filter((s) => s.active)
-                  .map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} — {money(s.unitPrice)}/{s.unit}
+                  {checkedInBookings.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.bookingCode} — {b.customerName}
                     </option>
                   ))}
-              </select>
-            </label>
-            <label className="form-field">
-              <span>Số lượng</span>
-              <input
-                type="number"
-                min="1"
-                step="1"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                required
-              />
-            </label>
-            <button
-              className="button button-dark"
-              disabled={addUsage.isPending || !checkedInBookings.length || !activeBookingRoom?.bookingRoomId}
-            >
-              <Plus size={15} /> Thêm vào booking
-            </button>
-          </form>
+                </select>
+              </label>
+              <label className="form-field">
+                <span>Phòng trong booking</span>
+                <select
+                  value={activeRoomId}
+                  onChange={(e) => setBookingRoomId(e.target.value)}
+                  disabled={!activeBooking}
+                >
+                  <option value="">{activeBooking ? 'Chọn phòng' : 'Chọn booking trước'}</option>
+                  {activeBooking?.rooms?.map((r) => (
+                    <option key={r.roomId} value={r.roomId}>
+                      Phòng {r.roomNumber}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="form-field">
+                <span>Dịch vụ</span>
+                <select
+                  value={serviceItemId}
+                  disabled={!checkedInBookings.length}
+                  onChange={(e) => setServiceItemId(e.target.value)}
+                >
+                  <option value="">Chọn dịch vụ</option>
+                  {services.data
+                    ?.filter((s) => s.active)
+                    .map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name} — {money(s.unitPrice)}/{s.unit}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <label className="form-field">
+                <span>Số lượng</span>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={quantity}
+                  disabled={!checkedInBookings.length}
+                  onChange={(e) => setQuantity(e.target.value)}
+                />
+              </label>
+              <button
+                type="submit"
+                className="button button-dark"
+                disabled={addUsage.isPending || bookings.isPending}
+              >
+                <Plus size={15} /> {addUsage.isPending ? 'Đang thêm…' : 'Thêm vào booking'}
+              </button>
+            </form>
+
+            {!bookings.isPending && !checkedInBookings.length && (
+              <p className="usage-empty-hint">
+                Hiện chưa có khách nào ở trạng thái đang lưu trú (đã nhận phòng). Khi có khách nhận phòng tại quầy, bạn có thể chọn booking ở trên để ghi nhận dịch vụ phát sinh vào hóa đơn.
+              </p>
+            )}
+          </>
         )}
 
         {bookingId && (
@@ -2834,7 +3217,7 @@ function ServicesManagement() {
         <ErrorPanel error={services.error} retry={() => void services.refetch()} />
       ) : (
         <section className="panel table-panel">
-          <div className="table-scroll">
+          <div ref={serviceTableScrollRef} className="table-scroll table-scroll-6">
             <table>
               <thead>
                 <tr>
@@ -2928,6 +3311,8 @@ function InvoicesManagement() {
   const [invoice, setInvoice] = useState<Invoice | null>(null)
   const [amount, setAmount] = useState('')
   const [discountAmount, setDiscountAmount] = useState('0')
+  const [printPreviewOpen, setPrintPreviewOpen] = useState(false)
+  const [confirmCheckoutOpen, setConfirmCheckoutOpen] = useState(false)
   const requestedBookingId = Number(searchParams.get('bookingId')) || null
   const requestHandled = useRef<number | null>(null)
   const invalidate = useInvalidate()
@@ -3033,6 +3418,7 @@ function InvoicesManagement() {
     mutationFn: (bookingId: number) =>
       request(api.post<ApiResponse<Invoice>>(`/reception/bookings/${bookingId}/check-out`)),
     onSuccess: async (value) => {
+      setConfirmCheckoutOpen(false)
       setInvoice(value)
       toast.success('Trả phòng đã được hoàn tất')
       await invalidate()
@@ -3071,6 +3457,10 @@ function InvoicesManagement() {
 
   const shown = invoiceQuery.data || invoice
   const selectedBooking = bookings.data?.find((booking) => booking.id === shown?.bookingId)
+  const isCheckedOut =
+    selectedBooking?.status === 'COMPLETED' ||
+    selectedBooking?.status === 'CHECKED_OUT' ||
+    Boolean(selectedBooking?.checkedOutAt)
 
   useEffect(() => {
     if (!invoiceQuery.data) return
@@ -3094,14 +3484,17 @@ function InvoicesManagement() {
         <div className="invoice-layout">
           <section className="panel invoice-booking-list">
             <div className="table-tools invoice-search-tools">
-              <label className="table-search">
-                <Search size={16} />
-                <input
-                  placeholder="Tìm booking hoặc khách hàng…"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </label>
+              <div className="invoice-search-field">
+                <span>Tìm đơn / khách</span>
+                <label className="table-search">
+                  <Search size={16} />
+                  <input
+                    placeholder="Mã booking hoặc tên khách…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </label>
+              </div>
               <label className="invoice-date-filter">
                 <span>Ngày thanh toán</span>
                 <input
@@ -3120,24 +3513,27 @@ function InvoicesManagement() {
             ) : paymentDateMatches.isError ? (
               <ErrorPanel error={paymentDateMatches.error} retry={() => void paymentDateMatches.refetch()} />
             ) : visible.length ? (
-              visible.map((b) => (
-                <button
-                  className={`invoice-booking-row ${invoice?.bookingId === b.id ? 'selected' : ''}`}
-                  key={b.id}
-                  onClick={() => void openInvoice(b.id)}
-                >
-                  <span className="booking-result-icon">
-                    <FileText size={17} />
-                  </span>
-                  <span>
-                    <b>{b.customerName}</b>
-                    <small>
-                      {b.bookingCode} — {searchDate ? `Thanh toán ${date(searchDate)}` : date(b.checkInDate)}
-                    </small>
-                  </span>
-                  <span className={`status-badge ${statusTone(b.status)}`}>{bookingNames[b.status]}</span>
-                </button>
-              ))
+              <div className="invoice-booking-scroll">
+                {visible.map((b) => (
+                  <button
+                    type="button"
+                    className={`invoice-booking-row ${invoice?.bookingId === b.id ? 'selected' : ''}`}
+                    key={b.id}
+                    onClick={() => void openInvoice(b.id)}
+                  >
+                    <span className="booking-result-icon">
+                      <FileText size={17} />
+                    </span>
+                    <span>
+                      <b>{b.customerName}</b>
+                      <small>
+                        {b.bookingCode} — {searchDate ? `Thanh toán ${date(searchDate)}` : date(b.checkInDate)}
+                      </small>
+                    </span>
+                    <span className={`status-badge ${statusTone(b.status)}`}>{bookingNames[b.status]}</span>
+                  </button>
+                ))}
+              </div>
             ) : (
               <div className="empty-compact">Không có booking phù hợp với bộ lọc</div>
             )}
@@ -3154,22 +3550,33 @@ function InvoicesManagement() {
               <>
                 <div className="invoice-head">
                   <div>
-                    <span className="section-kicker">Hóa đơn #{shown.id}</span>
+                    <span className="section-kicker">Hóa đơn #HG-{shown.id}</span>
                     <h3>{shown.customerName}</h3>
-                    <p>Mã đặt phòng: {selectedBooking?.bookingCode || 'Chưa cập nhật'}</p>
+                    <p>
+                      Mã đặt phòng: <strong>{selectedBooking?.bookingCode || `#${shown.bookingId}`}</strong>
+                      {selectedBooking?.roomNumbers?.length
+                        ? ` · ${selectedBooking.roomNumbers.map((r) => `Phòng ${r}`).join(', ')}`
+                        : ''}
+                    </p>
                   </div>
-                  <span className={`status-badge ${shown.isPaid ? 'green' : 'amber'}`}>
-                    {shown.isPaid ? 'Đã thanh toán' : shown.status === 'DRAFT' ? 'Bản nháp' : 'Chưa thanh toán'}
+                  <span
+                    className={`status-badge ${shown.isPaid || shown.status === 'PAID' ? 'green' : shown.status === 'ISSUED' ? 'amber' : 'gray'}`}
+                  >
+                    {shown.isPaid || shown.status === 'PAID'
+                      ? 'Đã thanh toán'
+                      : shown.status === 'DRAFT'
+                        ? 'Bản nháp'
+                        : 'Chờ thanh toán'}
                   </span>
                 </div>
 
                 <div className="invoice-booking-dates">
                   <div>
-                    <span>ĐẶT PHÒNG TỪ NGÀY</span>
+                    <span>NGÀY NHẬN DỰ KIẾN</span>
                     <b>{selectedBooking ? date(selectedBooking.checkInDate) : '—'}</b>
                   </div>
                   <div>
-                    <span>ĐẾN NGÀY</span>
+                    <span>NGÀY TRẢ DỰ KIẾN</span>
                     <b>{selectedBooking ? date(selectedBooking.checkOutDate) : '—'}</b>
                   </div>
                   <div>
@@ -3201,65 +3608,74 @@ function InvoicesManagement() {
                   </form>
                 )}
 
-                <div className="invoice-lines">
-                  <div>
-                    <span>Tiền phòng</span>
-                    <b>{money(shown.roomAmount)}</b>
-                  </div>
-                  <div>
-                    <span>Dịch vụ</span>
-                    <b>{money(shown.serviceAmount)}</b>
-                  </div>
-                  <div>
-                    <span>Thuế</span>
-                    <b>{money(shown.tax)}</b>
-                  </div>
-                  {shown.surcharge > 0 && (
-                    <div>
-                      <span>Phụ thu</span>
-                      <b>{money(shown.surcharge)}</b>
+                {shown.items?.length > 0 && (
+                  <div className="invoice-section-block">
+                    <span className="section-kicker">Chi tiết khoản mục</span>
+                    <div className="invoice-item-list">
+                      {shown.items.map((item) => (
+                        <div key={item.id}>
+                          <span>
+                            {localizeInvoiceItemDescription(item.description)}
+                            <small>
+                              {item.quantity} × {money(item.unitPrice)}
+                            </small>
+                          </span>
+                          <b>{money(item.lineTotal)}</b>
+                        </div>
+                      ))}
                     </div>
-                  )}
-                  {shown.discount > 0 && (
+                  </div>
+                )}
+
+                <div className="invoice-section-block">
+                  <span className="section-kicker">Tổng hợp thanh toán</span>
+                  <div className="invoice-lines">
                     <div>
-                      <span>Giảm trừ</span>
-                      <b>−{money(shown.discount)}</b>
+                      <span>Tiền phòng</span>
+                      <b>{money(shown.roomAmount)}</b>
                     </div>
-                  )}
+                    <div>
+                      <span>Dịch vụ</span>
+                      <b>{money(shown.serviceAmount)}</b>
+                    </div>
+                    <div>
+                      <span>Thuế VAT</span>
+                      <b>{money(shown.tax)}</b>
+                    </div>
+                    {shown.surcharge > 0 && (
+                      <div>
+                        <span>Phụ thu</span>
+                        <b>{money(shown.surcharge)}</b>
+                      </div>
+                    )}
+                    {shown.discount > 0 && (
+                      <div>
+                        <span>Giảm giá</span>
+                        <b>−{money(shown.discount)}</b>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="invoice-grand">
-                  <span>Giá cuối cùng sau giảm giá</span>
+                  <span>Tổng thanh toán</span>
                   <b>{money(shown.totalAmount)}</b>
                 </div>
 
                 <div className="invoice-balance">
-                  <span>
-                    Đã thanh toán <b>{money(shown.successfulPayments)}</b>
-                  </span>
-                  <span>
-                    Còn lại <b>{money(shown.balanceDue)}</b>
-                  </span>
-                </div>
-
-                {shown.items?.length > 0 && (
-                  <div className="invoice-item-list">
-                    {shown.items.map((item) => (
-                      <div key={item.id}>
-                        <span>
-                          {item.description}
-                          <small>
-                            {item.quantity} × {money(item.unitPrice)}
-                          </small>
-                        </span>
-                        <b>{money(item.lineTotal)}</b>
-                      </div>
-                    ))}
+                  <div>
+                    <span>Đã thanh toán</span>
+                    <b>{money(shown.successfulPayments)}</b>
                   </div>
-                )}
+                  <div>
+                    <span>Còn lại</span>
+                    <b>{money(shown.balanceDue)}</b>
+                  </div>
+                </div>
 
                 {shown.status === 'DRAFT' && (
                   <button
+                    type="button"
                     className="button button-dark full-button"
                     disabled={issue.isPending}
                     onClick={() => issue.mutate(shown.id)}
@@ -3288,27 +3704,39 @@ function InvoicesManagement() {
                         required
                       />
                     </label>
-                    <button className="button button-dark full-button" disabled={payment.isPending}>
+                    <button type="submit" className="button button-dark full-button" disabled={payment.isPending}>
                       {payment.isPending ? 'Đang ghi nhận…' : 'Ghi nhận tiền mặt'} <Check size={15} />
                     </button>
                     <small className="muted">Chỉ hỗ trợ ghi nhận tiền mặt tại quầy</small>
                   </form>
                 )}
 
-                {shown.status === 'PAID' && shown.balanceDue === 0 && (
+                {shown.status === 'PAID' && shown.balanceDue === 0 && !isCheckedOut && (
                   <button
+                    type="button"
                     className="button button-gold full-button"
                     disabled={completeCheckout.isPending}
-                    onClick={() =>
-                      window.confirm('Xác nhận trả phòng sau khi hóa đơn đã thanh toán đầy đủ?') &&
-                      completeCheckout.mutate(shown.bookingId)
-                    }
+                    onClick={() => setConfirmCheckoutOpen(true)}
                   >
                     {completeCheckout.isPending ? 'Đang hoàn tất…' : 'Hoàn tất trả phòng'} <ArrowRight size={15} />
                   </button>
                 )}
 
-                <button className="print-button" onClick={() => window.print()}>
+                {isCheckedOut && (
+                  <div className="invoice-checkout-done">
+                    <Check size={16} />
+                    <span>
+                      Đã hoàn tất trả phòng
+                      {selectedBooking?.checkedOutAt ? ` lúc ${dateTime(selectedBooking.checkedOutAt)}` : ''}
+                    </span>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  className="print-button"
+                  onClick={() => setPrintPreviewOpen(true)}
+                >
                   <ReceiptText size={15} /> In / lưu trang hóa đơn
                 </button>
               </>
@@ -3322,6 +3750,159 @@ function InvoicesManagement() {
           </section>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmCheckoutOpen && Boolean(shown)}
+        onOpenChange={(open) => {
+          if (!open && !completeCheckout.isPending) setConfirmCheckoutOpen(false)
+        }}
+        title="Hoàn tất trả phòng"
+        message={`Xác nhận hoàn tất trả phòng cho ${shown?.customerName || ''} (Hóa đơn #HG-${shown?.id || ''})? Phòng sẽ chuyển sang trạng thái Đang dọn dẹp.`}
+        confirmLabel="Hoàn tất trả phòng"
+        tone="gold"
+        pending={completeCheckout.isPending}
+        onConfirm={() => {
+          if (shown) completeCheckout.mutate(shown.bookingId)
+        }}
+      />
+
+      <Dialog
+        open={printPreviewOpen && Boolean(shown)}
+        onOpenChange={setPrintPreviewOpen}
+        title={shown ? `Bản in & Lưu hóa đơn #HG-${shown.id}` : 'Hóa đơn'}
+        description="Tải về tệp hóa đơn để lưu trữ hoặc mở trên trình duyệt để in / lưu PDF."
+        size="md"
+      >
+        {shown && (
+          <div className="ops-modal-body invoice-print-preview">
+            <div className="invoice-print-sheet">
+              <div className="invoice-print-head">
+                <div>
+                  <span className="section-kicker">HOÀNG GIA HOTEL</span>
+                  <h4>Hóa đơn #HG-{shown.id}</h4>
+                  <p>
+                    Khách hàng: <strong>{shown.customerName}</strong> · Mã đơn:{' '}
+                    <strong>{selectedBooking?.bookingCode || `#${shown.bookingId}`}</strong>
+                  </p>
+                </div>
+                <span
+                  className={`status-badge ${shown.status === 'PAID' ? 'green' : shown.status === 'ISSUED' ? 'blue' : 'gray'}`}
+                >
+                  {shown.status === 'PAID'
+                    ? 'Đã thanh toán'
+                    : shown.status === 'ISSUED'
+                      ? 'Đã phát hành'
+                      : 'Bản nháp'}
+                </span>
+              </div>
+
+              <div className="invoice-print-meta">
+                <div>
+                  <span>PHÒNG</span>
+                  <b>{selectedBooking?.roomNumbers?.length ? selectedBooking.roomNumbers.map((r) => `Phòng ${r}`).join(', ') : '—'}</b>
+                </div>
+                <div>
+                  <span>NHẬN — TRẢ</span>
+                  <b>
+                    {selectedBooking ? `${date(selectedBooking.checkInDate)} → ${date(selectedBooking.checkOutDate)}` : '—'}
+                  </b>
+                </div>
+                <div>
+                  <span>CHECK-IN THỰC TẾ</span>
+                  <b>{dateTime(selectedBooking?.checkedInAt)}</b>
+                </div>
+                <div>
+                  <span>CHECK-OUT / THANH TOÁN</span>
+                  <b>{dateTime(selectedBooking?.checkedOutAt || shown.paidAt)}</b>
+                </div>
+              </div>
+
+              {shown.items?.length > 0 && (
+                <div className="invoice-item-list">
+                  {shown.items.map((item) => (
+                    <div key={item.id}>
+                      <span>
+                        {localizeInvoiceItemDescription(item.description)}
+                        <small>
+                          {item.quantity} × {money(item.unitPrice)}
+                        </small>
+                      </span>
+                      <b>{money(item.lineTotal)}</b>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="invoice-lines">
+                <div>
+                  <span>Tiền phòng</span>
+                  <b>{money(shown.roomAmount)}</b>
+                </div>
+                <div>
+                  <span>Dịch vụ</span>
+                  <b>{money(shown.serviceAmount)}</b>
+                </div>
+                <div>
+                  <span>Thuế VAT</span>
+                  <b>{money(shown.tax)}</b>
+                </div>
+                {shown.surcharge > 0 && (
+                  <div>
+                    <span>Phụ thu</span>
+                    <b>{money(shown.surcharge)}</b>
+                  </div>
+                )}
+                {shown.discount > 0 && (
+                  <div>
+                    <span>Giảm giá</span>
+                    <b>−{money(shown.discount)}</b>
+                  </div>
+                )}
+              </div>
+
+              <div className="invoice-grand">
+                <span>Tổng thanh toán</span>
+                <b>{money(shown.totalAmount)}</b>
+              </div>
+              <div className="invoice-balance">
+                <span>
+                  Đã thanh toán <b>{money(shown.successfulPayments)}</b>
+                </span>
+                <span>
+                  Còn lại <b>{money(shown.balanceDue)}</b>
+                </span>
+              </div>
+            </div>
+
+            <div className="ops-modal-actions">
+              <button
+                type="button"
+                className="button button-outline"
+                onClick={() => {
+                  const res = tryNativePrint()
+                  if (res.threw || res.inIframe) {
+                    toast.info(
+                      'Nếu trình duyệt nhúng chặn hộp thoại in tự động, hãy nhấn Ctrl+P hoặc dùng nút "Tải hóa đơn (.html)".',
+                    )
+                  }
+                }}
+              >
+                <Printer size={15} /> In trực tiếp
+              </button>
+              <button
+                type="button"
+                className="button button-dark"
+                onClick={() => {
+                  downloadPrintableInvoice(shown, selectedBooking)
+                  toast.success('Đã tải tệp hóa đơn. Mở tệp trên trình duyệt để in hoặc lưu PDF.')
+                }}
+              >
+                <Download size={15} /> Tải hóa đơn (.html)
+              </button>
+            </div>
+          </div>
+        )}
+      </Dialog>
     </div>
   )
 }

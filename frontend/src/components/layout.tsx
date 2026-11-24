@@ -68,10 +68,20 @@ export function PublicLayout() {
   useMobileDrawerClose(open, setOpen)
 
   useEffect(() => {
-    if (location.hash) {
-      requestAnimationFrame(() => document.getElementById(location.hash.slice(1))?.scrollIntoView())
-    } else {
+    if (!location.hash) {
       window.scrollTo(0, 0)
+      return
+    }
+    const id = location.hash.slice(1)
+    const scrollTarget = () => {
+      const el = document.getElementById(id)
+      if (!el) return false
+      el.scrollIntoView({ behavior: 'smooth' })
+      return true
+    }
+    if (!scrollTarget()) {
+      const timer = window.setTimeout(scrollTarget, 120)
+      return () => window.clearTimeout(timer)
     }
   }, [location.pathname, location.hash])
 
@@ -202,16 +212,32 @@ export function PublicLayout() {
                   <ChevronRight size={16} className="mobile-nav-arrow" aria-hidden="true" />
                 </NavLink>
               )}
-              <a href="/#experience" onClick={() => setOpen(false)}>
+              <Link
+                to="/#experience"
+                onClick={() => {
+                  setOpen(false)
+                  if (location.pathname === '/' && location.hash === '#experience') {
+                    document.getElementById('experience')?.scrollIntoView({ behavior: 'smooth' })
+                  }
+                }}
+              >
                 <Sparkles size={17} className="mobile-nav-icon" aria-hidden="true" />
                 <span>Trải nghiệm</span>
                 <ChevronRight size={16} className="mobile-nav-arrow" aria-hidden="true" />
-              </a>
-              <a href="/#about" onClick={() => setOpen(false)}>
+              </Link>
+              <Link
+                to="/#about"
+                onClick={() => {
+                  setOpen(false)
+                  if (location.pathname === '/' && location.hash === '#about') {
+                    document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })
+                  }
+                }}
+              >
                 <Info size={17} className="mobile-nav-icon" aria-hidden="true" />
                 <span>Giới thiệu</span>
                 <ChevronRight size={16} className="mobile-nav-arrow" aria-hidden="true" />
-              </a>
+              </Link>
             </div>
 
             {user ? (
@@ -338,8 +364,26 @@ export function PublicLayout() {
           <div className="hg-footer-col">
             <span className="footer-label">KHÁM PHÁ</span>
             <Link to="/rooms">Tìm phòng nghỉ</Link>
-            <a href="/#experience">Trải nghiệm</a>
-            <a href="/#about">Câu chuyện</a>
+            <Link
+              to="/#experience"
+              onClick={() => {
+                if (location.pathname === '/' && location.hash === '#experience') {
+                  document.getElementById('experience')?.scrollIntoView({ behavior: 'smooth' })
+                }
+              }}
+            >
+              Trải nghiệm
+            </Link>
+            <Link
+              to="/#about"
+              onClick={() => {
+                if (location.pathname === '/' && location.hash === '#about') {
+                  document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })
+                }
+              }}
+            >
+              Câu chuyện
+            </Link>
           </div>
           <div className="hg-footer-col">
             <span className="footer-label">KHÁCH LƯU TRÚ</span>
@@ -408,6 +452,19 @@ type OpsNavItem = {
   icon: typeof LayoutDashboard
   end?: boolean
   badgeCount?: number
+}
+
+function formatStaffGreetingName(user?: { fullName?: string | null; role?: string } | null): string {
+  const fullName = user?.fullName?.trim()
+  const normalized = fullName?.toLowerCase()
+  if (user?.role === 'ROLE_ADMIN' && (!fullName || normalized === 'quản trị viên')) {
+    return 'quản trị viên'
+  }
+  if (normalized === 'lễ tân') {
+    return 'lễ tân'
+  }
+  if (!fullName) return 'bạn'
+  return fullName.split(/\s+/).slice(-1)[0] || 'bạn'
 }
 
 function OpsSidebarShell({
@@ -505,7 +562,7 @@ function OpsSidebarShell({
             <Menu />
           </button>
           <div className="reception-top-title">
-            <h1>Chào {user?.fullName?.split(' ').slice(-1)[0] || 'bạn'}</h1>
+            <h1>Chào {formatStaffGreetingName(user)}</h1>
           </div>
           <div className="top-user">
             <div className="avatar" aria-hidden="true">

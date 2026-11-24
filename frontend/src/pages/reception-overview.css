@@ -1,314 +1,855 @@
-.reception-overview {
+/* ==========================================================================
+   Hoàng Gia Hotel — Reception & Admin Overview Dashboard
+   Modern, detailed operational overview preserving warm cream & moss tones
+   with larger, uniform typography across every card, list, and table.
+   ========================================================================== */
+
+.reception-shell .reception-overview {
   --overview-ink: var(--hg-ink-900, #1d241f);
+  --overview-ink-soft: var(--hg-ink-700, #39433c);
   --overview-muted: var(--hg-ink-600, #525c55);
   --overview-line: var(--hg-border, #e5ddd0);
-  max-width: 1360px;
+  --overview-surface: var(--hg-cream-50, #fbf9f5);
+  --overview-sage-wash: var(--hg-moss-50, #f4f8f5);
+  max-width: 1440px;
   margin-inline: auto;
+  display: grid;
+  gap: 20px;
   color: var(--overview-ink);
+  font-size: 16px;
+  line-height: 1.55;
   font-variant-numeric: tabular-nums;
 }
 
-.overview-header {
+/* ---------------- Header ---------------- */
+.reception-shell .reception-overview .overview-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
   flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding: clamp(1.25rem, 2.8vw, 2rem);
+  gap: 18px 24px;
+  padding: clamp(22px, 2.6vw, 32px);
   border: 1px solid #d7e3db;
   border-radius: var(--hg-radius-lg, 14px);
   background: linear-gradient(135deg, #ffffff 0%, #eff6f1 100%);
   box-shadow: var(--hg-shadow-sm, 0 4px 14px rgba(23, 61, 43, 0.06));
 }
 
-.overview-header h1 {
-  margin: 0.35rem 0 0.45rem;
-  font-family: var(--hg-font-serif, "Playfair Display", Georgia, serif);
-  font-size: clamp(1.8rem, 3vw, 2.5rem);
-  font-weight: 600;
-  letter-spacing: -0.025em;
-  line-height: 1.1;
-  color: var(--hg-ink-900, #1d241f);
+.reception-shell .reception-overview .overview-header-copy {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
 }
 
-.reception-overview p,
-.overview-header time {
-  color: var(--overview-muted);
-  font-size: 0.875rem;
-}
-
-.overview-header a,
-.overview-panel header a,
-.overview-revenue a {
+.reception-shell .reception-overview .overview-kicker {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  min-height: 42px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.overview-header a {
-  padding: 0.6rem 1.05rem;
-  background: var(--hg-moss-900, #173d2b);
-  color: #ffffff;
-  border-radius: var(--hg-radius-md, 10px);
-  box-shadow: var(--hg-shadow-xs, 0 1px 2px rgba(23, 61, 43, 0.04));
-  transition: background-color 160ms ease, transform 160ms ease;
-}
-
-.overview-header a:hover {
-  background: var(--hg-moss-800, #1f4b36);
-  transform: translateY(-1px);
-}
-
-.overview-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  gap: 1.15rem;
-  align-items: stretch;
-}
-
-.overview-panel {
-  min-width: 0;
-  background: var(--hg-white, #ffffff);
-  border: 1px solid var(--overview-line);
-  border-radius: var(--hg-radius-lg, 14px);
-  padding: clamp(1.1rem, 2vw, 1.6rem);
-  box-shadow: var(--hg-shadow-sm, 0 4px 14px rgba(23, 61, 43, 0.06));
-}
-
-.overview-panel header {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 0.25rem 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.overview-panel h2 {
-  margin: 0;
-  font-family: var(--hg-font-sans, "DM Sans", sans-serif);
-  font-size: 1.125rem;
+  gap: 8px;
+  font-size: 13px !important;
   font-weight: 700;
-  letter-spacing: -0.015em;
-  color: var(--overview-ink);
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--hg-gold-700, #7f5c24) !important;
 }
 
-.overview-panel header a,
-.overview-revenue a {
-  color: var(--hg-moss-900, #173d2b);
-}
-
-.overview-panel a:hover {
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-
-.overview-tasks header {
-  display: block;
-}
-
-.overview-tasks header p {
-  margin: 0.3rem 0 0;
-}
-
-.overview-task-list {
-  display: grid;
-  gap: 0.6rem;
-}
-
-.overview-task {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 0.75rem;
-  min-height: 54px;
-  padding: 0.65rem 0.85rem;
-  border-radius: var(--hg-radius-md, 10px);
-  border: 1px solid #dde9e0;
-  background: #f4f8f5;
-  color: var(--overview-ink);
-  font-size: 0.92rem;
+.reception-shell .reception-overview .overview-header h1 {
+  margin: 0;
+  font-family: var(--hg-font-serif, "Playfair Display", Georgia, serif);
+  font-size: clamp(2rem, 3vw, 2.55rem) !important;
   font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: var(--overview-ink);
+  text-wrap: balance;
+}
+
+.reception-shell .reception-overview .overview-header-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 2px;
+  color: var(--overview-muted);
+  font-size: 16px !important;
+}
+
+.reception-shell .reception-overview .overview-header time {
+  color: var(--overview-muted);
+  font-size: 16px !important;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.reception-shell .reception-overview .overview-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.reception-shell .reception-overview .overview-btn-primary,
+.reception-shell .reception-overview .overview-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 20px;
+  border-radius: var(--hg-radius-md, 10px);
+  font-size: 15.5px !important;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
   text-decoration: none;
   transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
 
-.overview-task:hover {
-  background: #e8f1eb;
-  border-color: #c2d9c9;
+.reception-shell .reception-overview .overview-btn-primary {
+  background: var(--hg-moss-900, #173d2b);
+  color: #ffffff !important;
+  border: 1px solid var(--hg-moss-900, #173d2b);
+  box-shadow: var(--hg-shadow-xs);
+}
+
+.reception-shell .reception-overview .overview-btn-primary:hover {
+  background: var(--hg-moss-800, #1f4b36);
   transform: translateY(-1px);
-  text-decoration: none !important;
+  text-decoration: none;
 }
 
-.overview-task svg:first-child {
-  color: var(--hg-moss-800, #1f4b36);
+.reception-shell .reception-overview .overview-btn-secondary {
+  background: #ffffff;
+  color: var(--hg-moss-900, #173d2b) !important;
+  border: 1px solid var(--hg-border-strong, #d5cbb9);
 }
 
-.overview-task strong {
-  color: var(--hg-moss-900, #173d2b);
-  font-size: 1.15rem;
-  font-weight: 700;
+.reception-shell .reception-overview .overview-btn-secondary:hover {
+  background: var(--overview-surface);
+  border-color: var(--hg-moss-700, #295b43);
+  transform: translateY(-1px);
+  text-decoration: none;
 }
 
-.overview-room-total {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  color: var(--overview-muted);
-  font-size: 0.875rem;
-}
-
-.overview-room-total strong {
-  font-size: 2.1rem;
-  line-height: 1;
-  color: var(--overview-ink);
-}
-
-.overview-room-bar {
-  display: flex;
-  overflow: hidden;
-  height: 9px;
-  margin: 0.9rem 0 1.05rem;
-  border-radius: 9px;
-  background: var(--hg-cream-200, #efe9dc);
-}
-
-.reception-overview [data-tone="ready"] {
-  --tone: #275b3c;
-  --wash: #eaf3ed;
-}
-
-.reception-overview [data-tone="occupied"] {
-  --tone: #2e5372;
-  --wash: #eaf0f6;
-}
-
-.reception-overview [data-tone="cleaning"] {
-  --tone: #8e5f1c;
-  --wash: #f6efe0;
-}
-
-.reception-overview [data-tone="maintenance"] {
-  --tone: #973d35;
-  --wash: #faecea;
-}
-
-.overview-room-bar span {
-  background: var(--tone);
-}
-
-.overview-room-stats {
+/* ---------------- 4-Column KPI Strip ---------------- */
+.reception-shell .reception-overview .overview-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.55rem;
+  gap: 16px;
 }
 
-.overview-room-stats > div {
-  display: grid;
-  align-content: start;
-  gap: 0.25rem;
-  padding: 0.75rem;
-  border-radius: var(--hg-radius-md, 10px);
-  background: var(--wash);
-  color: var(--tone);
+.reception-shell .reception-overview .overview-kpi-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 22px;
+  background: #ffffff;
+  border: 1px solid var(--overview-line);
+  border-radius: var(--hg-radius-lg, 14px);
+  box-shadow: var(--hg-shadow-sm, 0 4px 14px rgba(23, 61, 43, 0.06));
 }
 
-.overview-room-stats strong {
-  font-size: 1.35rem;
-}
-
-.overview-room-stats span {
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.overview-bookings {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.overview-bookings li {
-  border-top: 1px solid var(--overview-line);
-}
-
-.overview-booking-link {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 0.5rem;
-  margin-inline: -0.5rem;
-  border-radius: var(--hg-radius-md, 10px);
-  color: var(--overview-ink);
-  text-decoration: none;
-  transition: background-color 160ms ease;
-}
-
-.overview-booking-link:hover {
-  background: #f4f8f5;
-  text-decoration: none !important;
-}
-
-.overview-booking-link > svg {
-  color: var(--overview-muted);
-}
-
-.overview-bookings strong,
-.overview-bookings small {
-  display: block;
-  overflow-wrap: anywhere;
-}
-
-.overview-bookings small {
-  margin-top: 0.2rem;
-  color: var(--overview-muted);
-  font-size: 0.8rem;
-}
-
-.overview-bookings .status-badge {
-  font-size: 0.75rem;
-  white-space: normal;
-}
-
-.overview-revenue {
-  align-self: start;
-  display: grid;
-  justify-items: start;
-  gap: 0.6rem;
+.reception-shell .reception-overview .overview-kpi-card.is-revenue {
   background: linear-gradient(180deg, #fcfaf3 0%, #f5efe1 100%);
   border-color: #e6dcc4;
 }
 
-.overview-revenue > svg {
+.reception-shell .reception-overview .overview-kpi-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.reception-shell .reception-overview .overview-kpi-label {
+  font-size: 15.5px !important;
+  font-weight: 600;
+  color: var(--overview-muted) !important;
+}
+
+.reception-shell .reception-overview .overview-kpi-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  flex: none;
+  background: var(--hg-moss-100, #ebf2ed);
+  color: var(--hg-moss-900, #173d2b);
+}
+
+.reception-shell .reception-overview .overview-kpi-icon[data-tone="blue"] {
+  background: var(--hg-info-bg, #eaf0f6);
+  color: var(--hg-info-text, #2e5372);
+}
+
+.reception-shell .reception-overview .overview-kpi-icon[data-tone="amber"] {
+  background: var(--hg-warning-bg, #f6efe0);
+  color: var(--hg-warning-text, #8e5f1c);
+}
+
+.reception-shell .reception-overview .overview-kpi-icon[data-tone="gold"] {
+  background: var(--hg-gold-100, #f5efe2);
   color: var(--hg-gold-700, #7f5c24);
 }
 
-.overview-revenue > strong {
-  font-size: clamp(1.6rem, 3.4vw, 2.55rem);
-  line-height: 1.1;
-  color: var(--hg-moss-900, #173d2b);
+.reception-shell .reception-overview .overview-kpi-value {
+  margin: 0;
+  font-family: var(--hg-font-sans, "DM Sans", sans-serif);
+  font-size: clamp(1.7rem, 2.2vw, 2.05rem) !important;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--overview-ink) !important;
   overflow-wrap: anywhere;
 }
 
-.reception-overview a:focus-visible {
-  outline: 2px solid var(--hg-gold-500, #b58a45);
-  outline-offset: 3px;
+.reception-shell .reception-overview .overview-kpi-card.is-revenue .overview-kpi-value {
+  color: var(--hg-moss-900, #173d2b) !important;
 }
 
-@media (max-width: 1000px) {
-  .overview-grid {
+.reception-shell .reception-overview .overview-kpi-meta {
+  margin: 0;
+  margin-top: auto;
+  font-size: 14.5px !important;
+  line-height: 1.5;
+  color: var(--overview-muted) !important;
+}
+
+.reception-shell .reception-overview .overview-kpi-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  font-size: 15px !important;
+  font-weight: 600;
+  color: var(--hg-moss-900, #173d2b) !important;
+  text-decoration: none;
+}
+
+.reception-shell .reception-overview .overview-kpi-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* ---------------- Main 2-Column Workspace ---------------- */
+.reception-shell .reception-overview .overview-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+.reception-shell .reception-overview .overview-panel {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: #ffffff;
+  border: 1px solid var(--overview-line);
+  border-radius: var(--hg-radius-lg, 14px);
+  padding: clamp(20px, 2.2vw, 26px);
+  box-shadow: var(--hg-shadow-sm, 0 4px 14px rgba(23, 61, 43, 0.06));
+}
+
+.reception-shell .reception-overview .overview-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+}
+
+.reception-shell .reception-overview .overview-panel-head h2 {
+  margin: 0;
+  font-family: var(--hg-font-sans, "DM Sans", sans-serif);
+  font-size: 20px !important;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  color: var(--overview-ink);
+}
+
+.reception-shell .reception-overview .overview-panel-desc {
+  margin: 4px 0 0;
+  font-size: 14.5px !important;
+  line-height: 1.5;
+  color: var(--overview-muted) !important;
+}
+
+.reception-shell .reception-overview .overview-action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 2px;
+  font-size: 15px !important;
+  font-weight: 600;
+  color: var(--hg-moss-900, #173d2b) !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.reception-shell .reception-overview .overview-action-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* ---------------- Segmented Tabs (Schedule & Room Filters) ---------------- */
+.reception-shell .reception-overview .overview-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 5px;
+  border-radius: 12px;
+  background: #f3efe6;
+}
+
+.reception-shell .reception-overview .overview-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--overview-muted) !important;
+  font-size: 15px !important;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+
+.reception-shell .reception-overview .overview-tab-btn:hover {
+  color: var(--hg-moss-900, #173d2b) !important;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.reception-shell .reception-overview .overview-tab-btn.is-active {
+  background: var(--hg-moss-900, #173d2b);
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(15, 42, 30, 0.16);
+}
+
+.reception-shell .reception-overview .overview-tab-count {
+  font-family: var(--hg-font-mono, monospace);
+  font-size: 14px !important;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+/* ---------------- Schedule List (Arrivals / Departures / Pending) ---------------- */
+.reception-shell .reception-overview .overview-schedule-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.reception-shell .reception-overview .overview-schedule-list li {
+  border-top: 1px solid var(--overview-line);
+}
+
+.reception-shell .reception-overview .overview-schedule-list li:last-child {
+  border-bottom: 1px solid var(--overview-line);
+}
+
+.reception-shell .reception-overview .overview-schedule-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 10px;
+  margin-inline: -10px;
+  border-radius: 10px;
+  color: var(--overview-ink);
+  text-decoration: none;
+  transition: background-color 150ms ease;
+}
+
+.reception-shell .reception-overview .overview-schedule-row:hover {
+  background: var(--overview-sage-wash);
+  text-decoration: none;
+}
+
+.reception-shell .reception-overview .overview-schedule-main {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.reception-shell .reception-overview .overview-schedule-main strong {
+  font-size: 16px !important;
+  font-weight: 600;
+  color: var(--overview-ink);
+  overflow-wrap: anywhere;
+}
+
+.reception-shell .reception-overview .overview-schedule-main small {
+  font-size: 14.5px !important;
+  color: var(--overview-muted) !important;
+  overflow-wrap: anywhere;
+}
+
+.reception-shell .reception-overview .overview-row-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14.5px !important;
+  font-weight: 600;
+  color: var(--hg-moss-900, #173d2b) !important;
+  white-space: nowrap;
+}
+
+.reception-shell .reception-overview .overview-quick-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+.reception-shell .reception-overview .overview-task-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 50px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #d7e3db;
+  background: var(--overview-sage-wash);
+  color: var(--overview-ink) !important;
+  text-decoration: none;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.reception-shell .reception-overview .overview-task-pill:hover {
+  background: #e7f0ea;
+  border-color: #b8cebf;
+  text-decoration: none;
+}
+
+.reception-shell .reception-overview .overview-task-pill span {
+  font-size: 14.5px !important;
+  font-weight: 600;
+  color: var(--overview-ink-soft) !important;
+}
+
+.reception-shell .reception-overview .overview-task-pill strong {
+  font-size: 18px !important;
+  font-weight: 700;
+  color: var(--hg-moss-900, #173d2b) !important;
+}
+
+/* ---------------- Room Board & Occupancy ---------------- */
+.reception-shell .reception-overview .overview-room-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 14px;
+}
+
+.reception-shell .reception-overview .overview-room-total {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--overview-muted);
+  font-size: 15.5px !important;
+}
+
+.reception-shell .reception-overview .overview-room-total strong {
+  font-size: 32px !important;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--overview-ink) !important;
+}
+
+.reception-shell .reception-overview .overview-occupancy-note {
+  font-size: 15px !important;
+  font-weight: 600;
+  color: var(--hg-moss-800, #1f4b36) !important;
+}
+
+.reception-shell .reception-overview .overview-room-bar {
+  display: flex;
+  overflow: hidden;
+  height: 11px;
+  border-radius: 999px;
+  background: var(--hg-cream-200, #efe9dc);
+}
+
+.reception-shell .reception-overview [data-tone="ready"] {
+  --tone: #275b3c;
+  --wash: #eaf3ed;
+  --ring: #bed9c7;
+}
+
+.reception-shell .reception-overview [data-tone="occupied"] {
+  --tone: #2e5372;
+  --wash: #eaf0f6;
+  --ring: #bdd0e2;
+}
+
+.reception-shell .reception-overview [data-tone="cleaning"] {
+  --tone: #8e5f1c;
+  --wash: #f6efe0;
+  --ring: #e4d1ad;
+}
+
+.reception-shell .reception-overview [data-tone="maintenance"] {
+  --tone: #973d35;
+  --wash: #faecea;
+  --ring: #e8c0bc;
+}
+
+.reception-shell .reception-overview .overview-room-bar span {
+  background: var(--tone);
+  transition: width 200ms ease;
+}
+
+.reception-shell .reception-overview .overview-room-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.reception-shell .reception-overview .overview-room-stat-btn {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 4px;
+  padding: 13px 14px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: var(--wash);
+  color: var(--tone);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 150ms ease, transform 150ms ease;
+}
+
+.reception-shell .reception-overview .overview-room-stat-btn:hover {
+  border-color: var(--ring);
+  transform: translateY(-1px);
+}
+
+.reception-shell .reception-overview .overview-room-stat-btn.is-selected {
+  border-color: var(--tone);
+  box-shadow: inset 0 0 0 1px var(--tone);
+}
+
+.reception-shell .reception-overview .overview-room-stat-btn strong {
+  font-size: 23px !important;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--tone) !important;
+}
+
+.reception-shell .reception-overview .overview-room-stat-btn span {
+  font-size: 14.5px !important;
+  font-weight: 600;
+  color: var(--tone) !important;
+}
+
+.reception-shell .reception-overview .overview-room-board-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.reception-shell .reception-overview .overview-room-board-head span {
+  font-size: 15px !important;
+  font-weight: 600;
+  color: var(--overview-ink-soft) !important;
+}
+
+.reception-shell .reception-overview .overview-clear-filter {
+  border: 0;
+  background: transparent;
+  padding: 4px 6px;
+  font-size: 14.5px !important;
+  font-weight: 600;
+  color: var(--hg-moss-900, #173d2b) !important;
+  cursor: pointer;
+}
+
+.reception-shell .reception-overview .overview-clear-filter:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.reception-shell .reception-overview .overview-room-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.reception-shell .reception-overview .overview-room-tile {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--overview-line);
+  background: var(--overview-surface);
+  text-decoration: none;
+  color: var(--overview-ink);
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.reception-shell .reception-overview .overview-room-tile:hover {
+  background: #ffffff;
+  border-color: var(--hg-border-strong, #d5cbb9);
+  text-decoration: none;
+}
+
+.reception-shell .reception-overview .overview-room-tile-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.reception-shell .reception-overview .overview-room-tile-top strong {
+  font-size: 16px !important;
+  font-weight: 700;
+  color: var(--overview-ink);
+}
+
+.reception-shell .reception-overview .overview-room-state {
+  font-size: 13.5px !important;
+  font-weight: 600;
+  color: var(--tone);
+  white-space: nowrap;
+}
+
+.reception-shell .reception-overview .overview-room-tile small {
+  font-size: 14px !important;
+  color: var(--overview-muted) !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------------- Status Badges ---------------- */
+.reception-shell .reception-overview .status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 14px !important;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+/* ---------------- Recent Bookings Table ---------------- */
+.reception-shell .reception-overview .overview-recent-panel {
+  gap: 14px;
+}
+
+.reception-shell .reception-overview .overview-table-wrap {
+  overflow-x: auto;
+  margin-inline: -6px;
+  padding-inline: 6px;
+}
+
+.reception-shell .reception-overview .overview-recent-table {
+  width: 100%;
+  min-width: 780px;
+  border-collapse: collapse;
+}
+
+.reception-shell .reception-overview .overview-recent-table thead th {
+  padding: 13px 14px;
+  text-align: left;
+  background: var(--overview-surface);
+  border-top: 1px solid var(--overview-line);
+  border-bottom: 1px solid var(--overview-line);
+  font-size: 14px !important;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--overview-muted) !important;
+  white-space: nowrap;
+}
+
+.reception-shell .reception-overview .overview-recent-table tbody td {
+  padding: 15px 14px;
+  border-bottom: 1px solid var(--hg-cream-200, #efe9dc);
+  vertical-align: middle;
+  font-size: 15.5px !important;
+  color: var(--overview-ink);
+}
+
+.reception-shell .reception-overview .overview-recent-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.reception-shell .reception-overview .overview-recent-table tbody tr:hover td {
+  background: var(--overview-surface);
+}
+
+.reception-shell .reception-overview .overview-recent-table tbody td strong {
+  font-size: 16px !important;
+  font-weight: 600;
+  color: var(--overview-ink);
+}
+
+.reception-shell .reception-overview .overview-recent-table .overview-cell-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 14px !important;
+  color: var(--overview-muted) !important;
+}
+
+.reception-shell .reception-overview .overview-code {
+  font-family: var(--hg-font-mono, monospace);
+  font-size: 15px !important;
+  font-weight: 600;
+  color: var(--hg-moss-900, #173d2b) !important;
+}
+
+.reception-shell .reception-overview .overview-money {
+  font-weight: 700;
+  font-size: 16px !important;
+  color: var(--overview-ink);
+  white-space: nowrap;
+}
+
+/* ---------------- Admin Overview Additions ---------------- */
+.reception-shell .reception-overview .overview-list-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.reception-shell .reception-overview .overview-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 0;
+  border-top: 1px solid var(--overview-line);
+}
+
+.reception-shell .reception-overview .overview-list-row:last-child {
+  border-bottom: 1px solid var(--overview-line);
+}
+
+.reception-shell .reception-overview .overview-list-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.reception-shell .reception-overview .overview-list-copy strong {
+  font-size: 16px !important;
+  font-weight: 600;
+  color: var(--overview-ink);
+}
+
+.reception-shell .reception-overview .overview-list-copy small {
+  font-size: 14.5px !important;
+  color: var(--overview-muted) !important;
+}
+
+.reception-shell .reception-overview .overview-list-value {
+  font-size: 16px !important;
+  font-weight: 700;
+  color: var(--hg-moss-900, #173d2b);
+  white-space: nowrap;
+}
+
+.reception-shell .reception-overview .overview-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.reception-shell .reception-overview .overview-shortcut-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 54px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--overview-line);
+  background: var(--overview-surface);
+  font-size: 15.5px !important;
+  font-weight: 600;
+  color: var(--overview-ink) !important;
+  text-decoration: none;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.reception-shell .reception-overview .overview-shortcut-link:hover {
+  background: var(--overview-sage-wash);
+  border-color: var(--hg-moss-700, #295b43);
+  text-decoration: none;
+}
+
+/* ---------------- Empty & Focus States ---------------- */
+.reception-shell .reception-overview .overview-empty {
+  padding: 28px 16px;
+  text-align: center;
+  border-radius: 10px;
+  background: var(--overview-surface);
+  border: 1px dashed var(--overview-line);
+}
+
+.reception-shell .reception-overview .overview-empty p {
+  margin: 0;
+  font-size: 15.5px !important;
+  color: var(--overview-muted) !important;
+}
+
+.reception-shell .reception-overview a:focus-visible,
+.reception-shell .reception-overview button:focus-visible {
+  outline: 2px solid var(--hg-gold-500, #b58a45);
+  outline-offset: 2px;
+}
+
+/* ---------------- Responsive ---------------- */
+@media (max-width: 1200px) {
+  .reception-shell .reception-overview .overview-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .reception-shell .reception-overview .overview-main-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .reception-shell .reception-overview .overview-shortcuts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 480px) {
-  .overview-room-stats {
+@media (max-width: 720px) {
+  .reception-shell .reception-overview .overview-kpi-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .reception-shell .reception-overview .overview-room-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .reception-shell .reception-overview .overview-room-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .reception-shell .reception-overview .overview-quick-strip,
+  .reception-shell .reception-overview .overview-shortcuts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .reception-shell .reception-overview .overview-schedule-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .reception-shell .reception-overview .overview-schedule-row .overview-row-cta {
+    grid-column: 1 / -1;
   }
 }

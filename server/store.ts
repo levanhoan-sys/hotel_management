@@ -671,7 +671,7 @@ export class HotelStore {
             {
               id: this.nextId('invoiceItem'),
               type: 'ROOM',
-              description: 'Room 202 for 2 night(s)',
+              description: 'Phòng 202 (2 đêm)',
               quantity: 2,
               unitPrice: 890000,
               lineTotal: roomTotal,
@@ -679,7 +679,7 @@ export class HotelStore {
             {
               id: this.nextId('invoiceItem'),
               type: 'SURCHARGE',
-              description: 'Tax (10%)',
+              description: 'Thuế VAT (10%)',
               quantity: 1,
               unitPrice: tax,
               lineTotal: tax,
@@ -1297,7 +1297,7 @@ export class HotelStore {
       items.push({
         id: this.nextId('invoiceItem'),
         type: 'ROOM',
-        description: `Room ${room?.roomNumber ?? d.roomId} for ${nights} night(s)`,
+        description: `Phòng ${room?.roomNumber ?? d.roomId} (${nights} đêm)`,
         quantity: nights,
         unitPrice: perNight,
         lineTotal,
@@ -1316,7 +1316,7 @@ export class HotelStore {
       items.push({
         id: this.nextId('invoiceItem'),
         type: 'SERVICE',
-        description: `${svc?.name ?? 'Service'}${room ? ` - room ${room.roomNumber}` : ''}`,
+        description: `${svc?.name ?? 'Dịch vụ'}${room ? ` — Phòng ${room.roomNumber}` : ''}`,
         quantity: o.quantity,
         unitPrice,
         lineTotal,
@@ -1335,7 +1335,7 @@ export class HotelStore {
       items.push({
         id: this.nextId('invoiceItem'),
         type: 'SURCHARGE',
-        description: 'Tax (10%)',
+        description: 'Thuế VAT (10%)',
         quantity: 1,
         unitPrice: tax,
         lineTotal: tax,
@@ -1345,7 +1345,7 @@ export class HotelStore {
       items.push({
         id: this.nextId('invoiceItem'),
         type: 'SURCHARGE',
-        description: 'Surcharge',
+        description: 'Phụ thu',
         quantity: 1,
         unitPrice: surchargeRounded,
         lineTotal: surchargeRounded,
@@ -1355,7 +1355,7 @@ export class HotelStore {
       items.push({
         id: this.nextId('invoiceItem'),
         type: 'DISCOUNT',
-        description: 'Discount',
+        description: 'Giảm giá',
         quantity: 1,
         unitPrice: -discountRounded,
         lineTotal: -discountRounded,

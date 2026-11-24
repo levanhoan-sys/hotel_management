@@ -3609,9 +3609,10 @@
 }
 
 .hg-deposit-amount {
-  font-family: var(--hg-font-serif);
+  font-family: var(--hg-font-sans);
   font-size: 18px;
   font-weight: 700;
+  letter-spacing: -0.015em;
   color: var(--hg-moss-900);
   font-variant-numeric: tabular-nums;
 }

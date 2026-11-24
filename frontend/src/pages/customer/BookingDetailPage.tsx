@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { api, errorMessage, request } from '../../lib/api'
+import { downloadPrintableInvoice, localizeInvoiceItemDescription, tryNativePrint } from '../../lib/invoice-print'
 import type { ApiResponse, Booking, Invoice } from '../../lib/types'
 import { DepositPaymentPanel } from '../../components/DepositPaymentPanel'
 import { RefundTrackingPanel } from '../../components/RefundTrackingPanel'
@@ -452,7 +453,7 @@ export function BookingDetailPage() {
                         {invoice.data.items.map((item) => (
                           <div key={item.id}>
                             <span>
-                              {item.description} × {item.quantity}
+                              {localizeInvoiceItemDescription(item.description)} × {item.quantity}
                             </span>
                             <b>{money(item.lineTotal)}</b>
                           </div>
@@ -481,7 +482,15 @@ export function BookingDetailPage() {
                       <button
                         type="button"
                         className="hg-btn hg-btn-outline hg-print-invoice-btn"
-                        onClick={() => window.print()}
+                        onClick={() => {
+                          downloadPrintableInvoice(invoice.data, b)
+                          const res = tryNativePrint()
+                          toast.success(
+                            res.inIframe || res.threw
+                              ? 'Đã tải tệp hóa đơn. Mở tệp để in hoặc lưu PDF.'
+                              : 'Đã mở hộp thoại in và tải tệp hóa đơn.',
+                          )
+                        }}
                       >
                         <Printer size={15} aria-hidden="true" /> In hóa đơn
                       </button>

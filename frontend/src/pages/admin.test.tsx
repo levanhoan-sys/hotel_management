@@ -23,8 +23,8 @@ function wrap(children: React.ReactNode, initial = '/') {
   )
 }
 
-describe('AdminPricing 6-month Recharts visualization', () => {
-  it('renders the 6-month price chart, mode toggles, and updates multipliers', async () => {
+describe('AdminPricing detailed Recharts bar visualization', () => {
+  it('renders the detailed bar chart, 3 mode toggles, month breakdown, and updates multipliers', async () => {
     const rates = [
       { strategy: 'STANDARD', multiplier: 1.0, defaultMultiplier: 1.0 },
       { strategy: 'WEEKEND', multiplier: 1.2, defaultMultiplier: 1.2 },
@@ -57,12 +57,23 @@ describe('AdminPricing 6-month Recharts visualization', () => {
 
     expect(await screen.findByText('Xu hướng giá phòng theo hạng phòng')).toBeInTheDocument()
     expect(await screen.findByLabelText('Biểu đồ biến động giá phòng 6 tháng gần nhất')).toBeInTheDocument()
-    expect(screen.getByText('Standard Single')).toBeInTheDocument()
-    expect(screen.getByText('Standard Double')).toBeInTheDocument()
+    expect(screen.getAllByText('Standard Single').length).toBeGreaterThanOrEqual(2)
+    expect(screen.getAllByText('Standard Double').length).toBeGreaterThanOrEqual(2)
+    expect(screen.getByText('Chi tiết theo hạng phòng — Th11/2026')).toBeInTheDocument()
+
+    // Select an earlier month to verify detailed breakdown updates
+    const julyBtn = screen.getByRole('button', { name: /Th7\/2026/i })
+    fireEvent.click(julyBtn)
+    expect(screen.getByText('Chi tiết theo hạng phòng — Th7/2026')).toBeInTheDocument()
 
     const percentBtn = screen.getByRole('button', { name: 'Biến động (%)' })
     fireEvent.click(percentBtn)
     expect(percentBtn).toHaveAttribute('aria-pressed', 'true')
+
+    const strategyBtn = screen.getByRole('button', { name: 'So sánh 3 chiến lược' })
+    fireEvent.click(strategyBtn)
+    expect(strategyBtn).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByLabelText('Chú giải 3 mức giá chiến lược')).toBeInTheDocument()
 
     const inputs = screen.getAllByLabelText('Hệ số giá (0,10–10,00)')
     fireEvent.change(inputs[0], { target: { value: '1.15' } })
