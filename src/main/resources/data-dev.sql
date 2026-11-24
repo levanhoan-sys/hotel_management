@@ -22,13 +22,13 @@ SELECT u.id, 1
 FROM users u WHERE u.username = 'demo.reception'
 AND NOT EXISTS (SELECT 1 FROM receptionists r WHERE r.id = u.id);
 
-INSERT INTO customers (id, identity_card, address, loyalty_points)
-SELECT u.id, 'DEMO-ID-0001', '1 Example Street, Ho Chi Minh City', 120
+INSERT INTO customers (id, identity_card, address)
+SELECT u.id, 'DEMO-ID-0001', '1 Example Street, Ho Chi Minh City'
 FROM users u WHERE u.username = 'demo.customer1'
 AND NOT EXISTS (SELECT 1 FROM customers c WHERE c.id = u.id);
 
-INSERT INTO customers (id, identity_card, address, loyalty_points)
-SELECT u.id, 'DEMO-ID-0002', '2 Example Street, Ho Chi Minh City', 40
+INSERT INTO customers (id, identity_card, address)
+SELECT u.id, 'DEMO-ID-0002', '2 Example Street, Ho Chi Minh City'
 FROM users u WHERE u.username = 'demo.customer2'
 AND NOT EXISTS (SELECT 1 FROM customers c WHERE c.id = u.id);
 

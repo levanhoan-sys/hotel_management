@@ -21,20 +21,10 @@ public class Customer extends User {
     @Column(length = 255)
     private String address;
 
-    @Column(name = "loyalty_points")
-    private int loyaltyPoints = 0;
-
     public Customer(String username, String password, String fullName, String email, String phone,
                     String identityCard, String address) {
         super(username, password, fullName, email, phone, RoleName.ROLE_CUSTOMER);
         this.identityCard = identityCard;
         this.address = address;
-        this.loyaltyPoints = 0;
-    }
-
-    public void addLoyaltyPoints(int points) {
-        if (points > 0) {
-            this.loyaltyPoints += points;
-        }
     }
 }

@@ -62,16 +62,15 @@ public class BookingServiceImpl implements BookingService {
         validateBookingRequest(request);
 
         List<Long> requestedIds = request.getRoomIds();
-        if (requestedIds.stream().anyMatch(id -> id == null || id <= 0)) throw new BadRequestException("Room IDs must be positive");
-        if (new HashSet<>(requestedIds).size() != requestedIds.size()) throw new BadRequestException("A room cannot appear more than once in a booking");
+        validateRoomIds(requestedIds, "A room cannot appear more than once in a booking");
 
         // Lock rooms by ascending ID so booking creation and maintenance scheduling share a lock order.
         List<Long> sortedIds = requestedIds.stream().sorted().toList();
         List<Room> rooms = roomRepository.findAllByIdForUpdate(sortedIds);
         if (rooms.size() != requestedIds.size()) throw new ResourceNotFoundException("One or more selected rooms do not exist");
 
+        boolean checkInIsToday = request.getCheckInDate().isEqual(LocalDate.now());
         for (Room room : rooms) {
-            boolean checkInIsToday = request.getCheckInDate().isEqual(LocalDate.now());
             if (!room.isOperational() || room.getStatus() == RoomStatus.MAINTENANCE
                     || (checkInIsToday && room.getStatus() != RoomStatus.AVAILABLE))
                 throw new ConflictException("Room " + room.getRoomNumber() + " is not operational or available");
@@ -87,8 +86,7 @@ public class BookingServiceImpl implements BookingService {
         }
         validateGuestCountKeys(request.getGuestCounts(), requestedIds);
 
-        Customer owner = customer;
-        Booking booking = new Booking(owner, request.getCheckInDate(), request.getCheckOutDate());
+        Booking booking = new Booking(customer, request.getCheckInDate(), request.getCheckOutDate());
         booking.setStatus(depositRequired ? BookingStatus.PENDING_DEPOSIT : BookingStatus.PENDING);
         for (Room room : rooms) {
             booking.addBookingDetail(room, room.getRoomType().getBasePrice(), guestCount(request.getGuestCounts(), room.getId()));
@@ -120,6 +118,13 @@ public class BookingServiceImpl implements BookingService {
         if (guestCounts == null) return 1;
         Integer count = guestCounts.get(roomId);
         return count == null ? 1 : count;
+    }
+
+    private void validateRoomIds(List<Long> roomIds, String duplicateMessage) {
+        if (roomIds.stream().anyMatch(id -> id == null || id <= 0))
+            throw new BadRequestException("Room IDs must be positive");
+        if (new HashSet<>(roomIds).size() != roomIds.size())
+            throw new BadRequestException(duplicateMessage);
     }
 
     private void validateGuestCountKeys(Map<Long, Integer> guestCounts, List<Long> roomIds) {
@@ -163,8 +168,7 @@ public class BookingServiceImpl implements BookingService {
             throw new BadRequestException("Rooms can only be changed for pending or confirmed bookings");
         List<Long> requestedIds = request.roomIds();
         if (requestedIds == null || requestedIds.isEmpty()) throw new BadRequestException("At least one room is required");
-        if (requestedIds.stream().anyMatch(id -> id == null || id <= 0)) throw new BadRequestException("Room IDs must be positive");
-        if (new HashSet<>(requestedIds).size() != requestedIds.size()) throw new BadRequestException("A room cannot appear more than once");
+        validateRoomIds(requestedIds, "A room cannot appear more than once");
 
         TreeSet<Long> sortedLocks = new TreeSet<>();
         booking.getDetails().forEach(detail -> sortedLocks.add(detail.getRoom().getId()));
@@ -176,9 +180,9 @@ public class BookingServiceImpl implements BookingService {
         lockedRooms.forEach(room -> byId.put(room.getId(), room));
         List<BookingDetail> replacement = new ArrayList<>();
 
+        boolean checkInIsToday = booking.getCheckInDate().isEqual(LocalDate.now());
         for (Long roomId : requestedIds) {
             Room room = byId.get(roomId);
-            boolean checkInIsToday = booking.getCheckInDate().isEqual(LocalDate.now());
             if (!room.isOperational() || room.getStatus() == RoomStatus.MAINTENANCE
                     || (checkInIsToday && room.getStatus() != RoomStatus.AVAILABLE))
                 throw new ConflictException("Room " + room.getRoomNumber() + " is not available");
@@ -196,10 +200,6 @@ public class BookingServiceImpl implements BookingService {
         booking.replaceRooms(replacement);
         return BookingResponse.fromEntity(booking);
     }
-
-    @Override
-    @Transactional
-    public void cancelBooking(Long bookingId) { cancelBooking(bookingId, "SYSTEM", null); }
 
     @Override
     @Transactional

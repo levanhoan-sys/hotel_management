@@ -87,11 +87,6 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    public List<RoomResponse> getAvailableRoomsInDateRange(LocalDate checkIn, LocalDate checkOut) {
-        return searchRooms(checkIn, checkOut, null, null, null, null);
-    }
-
-    @Override
     @Transactional
     public void updateRoomStatus(Long id, RoomStatus status) {
         Room room = roomRepository.findByIdForUpdate(id)

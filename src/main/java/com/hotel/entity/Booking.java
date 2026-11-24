@@ -80,9 +80,6 @@ public class Booking extends BaseEntity {
     @Column(name = "deposit_reported_at")
     private Instant depositReportedAt;
 
-    @Column(name = "deposit_confirmed_by", length = 100)
-    private String depositConfirmedBy;
-
     @Column(name = "deposit_paid_at")
     private Instant depositPaidAt;
 
@@ -101,10 +98,6 @@ public class Booking extends BaseEntity {
         this.checkOutDate = checkOutDate;
         this.status = BookingStatus.PENDING;
         this.bookingCode = "BK-" + UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase();
-    }
-
-    public void addBookingDetail(Room room, double pricePerNight) {
-        addBookingDetail(room, pricePerNight, 1);
     }
 
     public void addBookingDetail(Room room, double pricePerNight, int guestCount) {
@@ -167,17 +160,6 @@ public class Booking extends BaseEntity {
 
     private void requireStatus(BookingStatus expected) {
         if (status != expected) throw new IllegalStateException("Booking must be " + expected + " to perform this action");
-    }
-
-    public void addServiceOrder(ServiceItem item, int quantity) {
-        if (details.size() != 1) throw new IllegalStateException("A booking room must be specified for service usage");
-        addServiceOrder(details.getFirst(), item, quantity);
-    }
-
-    public ServiceOrder addServiceOrder(BookingDetail bookingDetail, ServiceItem item, int quantity) {
-        ServiceOrder order = new ServiceOrder(this, bookingDetail, item, quantity);
-        this.serviceOrders.add(order);
-        return order;
     }
 
     public int getNumberOfNights() {

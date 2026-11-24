@@ -76,7 +76,6 @@ public class DepositPaymentService {
         payment.setConfirmedTransactionReference(reference);
         payment.setConfirmedBy(receptionist);
         booking.setDepositPaidAt(Instant.now());
-        booking.setDepositConfirmedBy(receptionist);
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.setConfirmedAt(java.time.LocalDateTime.now());
         return DepositResponse.from(booking, payment);

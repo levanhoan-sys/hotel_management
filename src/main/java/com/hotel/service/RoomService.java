@@ -16,7 +16,6 @@ public interface RoomService {
     List<RoomResponse> getAllRooms();
     RoomResponse getRoomById(Long id);
     List<com.hotel.dto.response.RoomDayResponse> getRoomCalendar(Long id, LocalDate from, LocalDate to);
-    List<RoomResponse> getAvailableRoomsInDateRange(LocalDate checkIn, LocalDate checkOut);
     void updateRoomStatus(Long id, RoomStatus status);
     RoomResponse updateRoom(Long id, CreateRoomRequest request);
     void setRoomOperational(Long id, boolean operational);

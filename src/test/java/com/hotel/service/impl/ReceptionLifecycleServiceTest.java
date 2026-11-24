@@ -76,7 +76,7 @@ class ReceptionLifecycleServiceTest {
         room.setRoomType(type);
         room.setStatus(roomStatus);
         room.setOperational(true);
-        booking.addBookingDetail(room, 100.0);
+        booking.addBookingDetail(room, 100.0, 1);
         return booking;
     }
 }

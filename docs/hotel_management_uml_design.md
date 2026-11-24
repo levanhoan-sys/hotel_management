@@ -117,7 +117,6 @@ classDiagram
     class Customer {
         -String identityCard
         -String address
-        -int loyaltyPoints
         +bookRoom(Booking booking) void
         +viewHistory() List~Booking~
     }

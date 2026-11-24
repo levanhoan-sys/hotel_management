@@ -13,7 +13,6 @@ public interface BookingService {
     BookingResponse createDepositBooking(BookingRequest request);
     BookingResponse getBookingById(Long id);
     List<BookingResponse> getBookingsByCustomerId(Long customerId);
-    void cancelBooking(Long bookingId);
     void cancelBooking(Long bookingId, String actor, String reason);
     BookingResponse confirmBooking(Long bookingId);
     BookingResponse rejectBooking(Long bookingId, String reason);

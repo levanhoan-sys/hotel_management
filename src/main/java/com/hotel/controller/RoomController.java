@@ -37,10 +37,8 @@ public class RoomController {
             @RequestParam(required = false) Integer minCapacity,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice) {
-        if (checkIn != null || checkOut != null || roomTypeId != null || minCapacity != null || minPrice != null || maxPrice != null) {
-            return ResponseEntity.ok(ApiResponse.ok(roomService.searchRooms(checkIn, checkOut, roomTypeId, minCapacity, minPrice, maxPrice)));
-        }
-        return ResponseEntity.ok(ApiResponse.ok(roomService.searchRooms(null, null, null, null, null, null)));
+        return ResponseEntity.ok(ApiResponse.ok(roomService.searchRooms(
+                checkIn, checkOut, roomTypeId, minCapacity, minPrice, maxPrice)));
     }
 
     @GetMapping("/{id}")
@@ -73,7 +71,7 @@ public class RoomController {
     public ResponseEntity<ApiResponse<List<RoomResponse>>> getAvailableRooms(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkIn,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOut) {
-        return ResponseEntity.ok(ApiResponse.ok(roomService.getAvailableRoomsInDateRange(checkIn, checkOut)));
+        return ResponseEntity.ok(ApiResponse.ok(roomService.searchRooms(checkIn, checkOut, null, null, null, null)));
     }
 
     @PatchMapping("/{id}/status")
