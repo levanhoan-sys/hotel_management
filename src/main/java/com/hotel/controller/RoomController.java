@@ -1,14 +1,10 @@
 package com.hotel.controller;
 
-import com.hotel.dto.request.CreateRoomRequest;
 import com.hotel.dto.response.ApiResponse;
 import com.hotel.dto.response.RoomResponse;
-import com.hotel.enums.RoomStatus;
 import com.hotel.service.RoomService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,16 +14,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/rooms")
 @RequiredArgsConstructor
-public class RoomController {
+public class RoomControlld fer {
 
     private final RoomService roomService;
     private final com.hotel.service.impl.RoomRecommendationService recommendationService;
-
-    @PostMapping
-    public ResponseEntity<ApiResponse<RoomResponse>> createRoom(@Valid @RequestBody CreateRoomRequest request) {
-        RoomResponse response = roomService.createRoom(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(response, "Room created successfully"));
-    }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<RoomResponse>>> getAllRooms(
@@ -74,11 +64,4 @@ public class RoomController {
         return ResponseEntity.ok(ApiResponse.ok(roomService.searchRooms(checkIn, checkOut, null, null, null, null)));
     }
 
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<ApiResponse<Void>> updateRoomStatus(
-            @PathVariable Long id,
-            @RequestParam RoomStatus status) {
-        roomService.updateRoomStatus(id, status);
-        return ResponseEntity.ok(ApiResponse.ok(null, "Room status updated successfully"));
-    }
 }

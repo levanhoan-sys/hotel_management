@@ -9,6 +9,7 @@ import com.hotel.dto.response.RoomResponse;
 import com.hotel.dto.response.RoomTypeResponse;
 import com.hotel.enums.RoomStatus;
 import com.hotel.service.RoomService;
+import com.hotel.service.RoomTypeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RoomManagementController {
     private final RoomService rooms;
+    private final RoomTypeService roomTypes;
 
     @GetMapping("/rooms")
     public ApiResponse<List<RoomResponse>> rooms() { return ApiResponse.ok(rooms.getAllRooms()); }
@@ -49,16 +51,16 @@ public class RoomManagementController {
     }
 
     @GetMapping("/room-types")
-    public ApiResponse<List<RoomTypeResponse>> roomTypes() { return ApiResponse.ok(rooms.getRoomTypes()); }
+    public ApiResponse<List<RoomTypeResponse>> roomTypes() { return ApiResponse.ok(roomTypes.getRoomTypes()); }
 
     @PostMapping("/room-types")
     public ResponseEntity<ApiResponse<RoomTypeResponse>> createRoomType(@Valid @RequestBody RoomTypeRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(rooms.createRoomType(request), "Room type created successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(roomTypes.createRoomType(request), "Room type created successfully"));
     }
 
     @PutMapping("/room-types/{id}")
     public ApiResponse<RoomTypeResponse> updateRoomType(@PathVariable Long id, @Valid @RequestBody RoomTypeRequest request) {
-        return ApiResponse.ok(rooms.updateRoomType(id, request), "Room type updated successfully");
+        return ApiResponse.ok(roomTypes.updateRoomType(id, request), "Room type updated successfully");
     }
 
     @GetMapping("/rooms/{roomId}/blocks")

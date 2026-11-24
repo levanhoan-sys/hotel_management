@@ -82,8 +82,6 @@ Invoice data: `{ id, bookingId, customerName, roomAmount, serviceAmount, tax, su
 
 | Method | Endpoint | Request | Access |
 |---|---|---|---|
-| POST | `/api/rooms` | `{ roomNumber, floor, roomTypeId }` | Receptionist |
-| PATCH | `/api/rooms/{id}/status` | Query `status` | Receptionist |
 | POST | `/api/bookings/{id}/services` | `{ serviceItemId, bookingRoomId?, quantity }` | Authenticated; owner/staff check in controller, but security matcher requires receptionist |
 | POST | `/api/invoices/checkout/{bookingId}` | `{ paymentMethod, discount?, surcharge?, idempotencyKey? }` | Receptionist by security configuration; controller also checks owner/staff |
 | GET | `/api/bookings/customer/{customerId}` | — | Owner or receptionist |

@@ -2,9 +2,7 @@ package com.hotel.service;
 
 import com.hotel.dto.request.CreateRoomRequest;
 import com.hotel.dto.response.RoomResponse;
-import com.hotel.dto.request.RoomTypeRequest;
 import com.hotel.dto.request.CreateRoomBlockRequest;
-import com.hotel.dto.response.RoomTypeResponse;
 import com.hotel.dto.response.RoomBlockResponse;
 import com.hotel.enums.RoomStatus;
 
@@ -21,9 +19,6 @@ public interface RoomService {
     void setRoomOperational(Long id, boolean operational);
     List<RoomResponse> searchRooms(LocalDate checkIn, LocalDate checkOut, Long roomTypeId,
                                    Integer minCapacity, Double minPrice, Double maxPrice);
-    List<RoomTypeResponse> getRoomTypes();
-    RoomTypeResponse createRoomType(RoomTypeRequest request);
-    RoomTypeResponse updateRoomType(Long id, RoomTypeRequest request);
     List<RoomBlockResponse> getRoomBlocks(Long roomId);
     RoomBlockResponse createRoomBlock(Long roomId, CreateRoomBlockRequest request);
     void deleteRoomBlock(Long blockId);
