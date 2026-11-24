@@ -906,13 +906,16 @@ function buildApiRouter() {
     const status = String(req.query.status || '').toUpperCase() as RoomStatus
     const room = store.rooms.find((r) => r.id === id)
     if (!room) throw new HttpError(404, 'Room not found')
+    if (room.status === 'OCCUPIED' && status !== 'OCCUPIED') {
+      throw new HttpError(400, 'An occupied room cannot change status manually before check-out')
+    }
     if (!room.operational && status !== 'MAINTENANCE') {
       throw new HttpError(400, 'An inactive room must be activated before changing its status')
     }
     if (status === 'MAINTENANCE' && store.hasActiveOrFutureBooking(id, todayIsoDate())) {
       throw new HttpError(400, 'Room has an active or future booking')
     }
-    if (status === 'AVAILABLE' && room.status === 'CLEANING') {
+    if (status === 'AVAILABLE' && (room.status === 'CLEANING' || room.status === 'MAINTENANCE')) {
       room.status = 'AVAILABLE'
     } else if (status === 'MAINTENANCE' || status === 'CLEANING') {
       room.status = status
@@ -1818,7 +1821,7 @@ function buildApiRouter() {
 async function startServer() {
   const app = express()
   app.use(cors())
-  app.use(express.json())
+  app.use(express.json({ strict: false }))
 
   app.use('/api', buildApiRouter())
 
@@ -1826,6 +1829,9 @@ async function startServer() {
   app.use('/api', (err: unknown, _req: Request, res: Response, _next: NextFunction) => {
     if (err instanceof HttpError) {
       return res.status(err.status).json(fail(err.message, err.data))
+    }
+    if (err instanceof SyntaxError && 'status' in err && err.status === 400) {
+      return res.status(400).json(fail('Invalid request body'))
     }
     console.error('[API Error]', err)
     res.status(500).json(fail('Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.'))

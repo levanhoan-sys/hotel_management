@@ -216,13 +216,15 @@ export function DateSearch({
   })
   const nav = useNavigate()
 
-  const persistDates = (nextCheckIn: string, nextCheckOut: string) => {
+  const persistParams = (nextCheckIn: string, nextCheckOut: string, nextGuests = guests) => {
     if (!compact) return
     const next = new URLSearchParams(window.location.search)
     if (nextCheckIn) next.set('checkIn', nextCheckIn)
     else next.delete('checkIn')
     if (nextCheckOut) next.set('checkOut', nextCheckOut)
     else next.delete('checkOut')
+    if (nextGuests) next.set('guests', nextGuests)
+    else next.delete('guests')
     nav(`/rooms?${next.toString()}`, { replace: true })
   }
 
@@ -251,7 +253,7 @@ export function DateSearch({
           min={tomorrow()}
           onChange={(e) => {
             setCheckIn(e.target.value)
-            persistDates(e.target.value, checkOut)
+            persistParams(e.target.value, checkOut)
           }}
         />
       </label>
@@ -266,7 +268,7 @@ export function DateSearch({
           min={checkIn || tomorrow()}
           onChange={(e) => {
             setCheckOut(e.target.value)
-            persistDates(checkIn, e.target.value)
+            persistParams(checkIn, e.target.value)
           }}
         />
       </label>
@@ -278,7 +280,10 @@ export function DateSearch({
           variant="search-cell"
           ariaLabel="Số khách"
           value={guests}
-          onChange={setGuests}
+          onChange={(nextGuests) => {
+            setGuests(nextGuests)
+            persistParams(checkIn, checkOut, nextGuests)
+          }}
           options={[1, 2, 3, 4, 5, 6].map((n) => ({
             value: String(n),
             label: `${n} khách`,

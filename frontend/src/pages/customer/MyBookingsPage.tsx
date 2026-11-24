@@ -173,23 +173,17 @@ export function MyBookingsPage() {
         <section className="hg-panel hg-account-toolbar" aria-label="Bộ lọc và tìm kiếm đơn đặt phòng">
           <div className="hg-account-toolbar-top">
             <div className="hg-status-tabs" role="group" aria-label="Lọc đơn đặt phòng">
-              {STATUS_TABS.map(([value, label]) => {
-                const count = bookings.data
-                  ? allBookings.filter((item) => matchesTabFilter(item.status, value)).length
-                  : null
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    className={filter === value ? 'is-active' : ''}
-                    aria-pressed={filter === value}
-                    onClick={() => updateFilter('status', value === 'ALL' ? '' : value)}
-                  >
-                    <span>{label}</span>
-                    {count !== null && <small>{count}</small>}
-                  </button>
-                )
-              })}
+              {STATUS_TABS.map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={filter === value ? 'is-active' : ''}
+                  aria-pressed={filter === value}
+                  onClick={() => updateFilter('status', value === 'ALL' ? '' : value)}
+                >
+                  <span>{label}</span>
+                </button>
+              ))}
             </div>
 
             <div className="hg-booking-count">

@@ -234,12 +234,29 @@
 }
 
 .overview-bookings li {
-  display: flex;
-  justify-content: space-between;
+  border-top: 1px solid var(--overview-line);
+}
+
+.overview-booking-link {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem 0;
-  border-top: 1px solid var(--overview-line);
+  padding: 0.75rem 0.5rem;
+  margin-inline: -0.5rem;
+  border-radius: var(--hg-radius-md, 10px);
+  color: var(--overview-ink);
+  text-decoration: none;
+  transition: background-color 160ms ease;
+}
+
+.overview-booking-link:hover {
+  background: #f4f8f5;
+  text-decoration: none !important;
+}
+
+.overview-booking-link > svg {
+  color: var(--overview-muted);
 }
 
 .overview-bookings strong,

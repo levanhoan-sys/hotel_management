@@ -286,7 +286,7 @@
 }
 
 /* Buttons */
-.reception-shell .button {
+:is(.reception-shell, .ops-modal-body) .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -311,64 +311,80 @@
     transform var(--hg-duration) var(--hg-ease);
 }
 
-.reception-shell .button:hover:not(:disabled) {
+:is(.reception-shell, .ops-modal-body) .button:hover:not(:disabled) {
   transform: translateY(-1px);
 }
 
-.reception-shell .button:disabled {
+:is(.reception-shell, .ops-modal-body) .button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 
-.reception-shell .button-dark {
+:is(.reception-shell, .ops-modal-body) .button-dark {
   background: var(--hg-moss-900);
   color: var(--hg-white);
   border-color: var(--hg-moss-900);
   box-shadow: var(--hg-shadow-xs);
 }
 
-.reception-shell .button-dark:hover:not(:disabled) {
+:is(.reception-shell, .ops-modal-body) .button-dark:hover:not(:disabled) {
   background: var(--hg-moss-800);
   border-color: var(--hg-moss-800);
 }
 
-.reception-shell .button-gold {
+:is(.reception-shell, .ops-modal-body) .button-gold {
   background: var(--hg-gold-500);
   color: var(--hg-white);
   border-color: var(--hg-gold-500);
   box-shadow: var(--hg-shadow-xs);
 }
 
-.reception-shell .button-gold:hover:not(:disabled) {
+:is(.reception-shell, .ops-modal-body) .button-gold:hover:not(:disabled) {
   background: var(--hg-gold-600);
   border-color: var(--hg-gold-600);
 }
 
-.reception-shell .button-outline {
+:is(.reception-shell, .ops-modal-body) .button-outline {
   background: var(--hg-white);
   color: var(--hg-moss-900);
   border-color: var(--hg-border-strong);
 }
 
-.reception-shell .button-outline:hover:not(:disabled) {
+:is(.reception-shell, .ops-modal-body) .button-outline:hover:not(:disabled) {
   background: var(--hg-cream-50);
   border-color: var(--hg-moss-700);
 }
 
-.reception-shell .button-danger {
+:is(.reception-shell, .ops-modal-body) .button-danger {
   background: #b42318;
   color: var(--hg-white);
   border-color: #b42318;
   box-shadow: var(--hg-shadow-xs);
 }
 
-.reception-shell .button-danger:hover:not(:disabled) {
+:is(.reception-shell, .ops-modal-body) .button-danger:hover:not(:disabled) {
   background: #912018;
   border-color: #912018;
 }
 
-.reception-shell .full-button {
+:is(.reception-shell, .ops-modal-body) .full-button {
   width: 100%;
+}
+
+.ops-modal-body {
+  font-family: var(--hg-font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--hg-ink-900);
+}
+
+.ops-modal-body .section-kicker {
+  font-family: var(--hg-font-sans);
+  font-size: 11px !important;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--hg-gold-700) !important;
 }
 
 /* Customer-inspired Filter Panel for Bookings, Rooms, and Room Types */
@@ -571,7 +587,7 @@
   color: var(--hg-moss-900);
 }
 
-.reception-shell .ops-confirm-summary {
+:is(.reception-shell, .ops-modal-body) .ops-confirm-summary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px 14px;
@@ -581,12 +597,12 @@
   border: 1px solid var(--hg-border);
 }
 
-.reception-shell .ops-confirm-summary > div {
+:is(.reception-shell, .ops-modal-body) .ops-confirm-summary > div {
   display: grid;
   gap: 2px;
 }
 
-.reception-shell .ops-confirm-summary span {
+:is(.reception-shell, .ops-modal-body) .ops-confirm-summary span {
   font-size: 11px !important;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -594,12 +610,12 @@
   color: var(--hg-ink-600) !important;
 }
 
-.reception-shell .ops-confirm-summary b {
+:is(.reception-shell, .ops-modal-body) .ops-confirm-summary b {
   font-size: 13.5px !important;
   color: var(--hg-ink-900);
 }
 
-.reception-shell .ops-modal-actions {
+:is(.reception-shell, .ops-modal-body) .ops-modal-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -650,9 +666,9 @@
 
 .reception-shell .table-tools select,
 .reception-shell .invoice-date-filter input,
-.reception-shell .form-field input,
-.reception-shell .form-field select,
-.reception-shell .form-field textarea {
+:is(.reception-shell, .ops-modal-body) .form-field input,
+:is(.reception-shell, .ops-modal-body) .form-field select,
+:is(.reception-shell, .ops-modal-body) .form-field textarea {
   min-height: 42px;
   border: 1px solid var(--hg-border-strong);
   border-radius: var(--hg-radius-md);
@@ -664,7 +680,7 @@
   transition: border-color var(--hg-duration) var(--hg-ease), box-shadow var(--hg-duration) var(--hg-ease);
 }
 
-.reception-shell .form-field textarea {
+:is(.reception-shell, .ops-modal-body) .form-field textarea {
   min-height: 86px;
   resize: vertical;
   line-height: 1.5;
@@ -672,16 +688,16 @@
 
 .reception-shell .table-tools select:focus,
 .reception-shell .invoice-date-filter input:focus,
-.reception-shell .form-field input:focus,
-.reception-shell .form-field select:focus,
-.reception-shell .form-field textarea:focus,
+:is(.reception-shell, .ops-modal-body) .form-field input:focus,
+:is(.reception-shell, .ops-modal-body) .form-field select:focus,
+:is(.reception-shell, .ops-modal-body) .form-field textarea:focus,
 .reception-shell .table-search:focus-within {
   border-color: var(--hg-gold-500);
   box-shadow: 0 0 0 3px rgba(181, 138, 69, 0.16);
   outline: 0;
 }
 
-.reception-shell .form-field > span {
+:is(.reception-shell, .ops-modal-body) .form-field > span {
   font-size: 12.5px !important;
   font-weight: 600;
   color: var(--hg-ink-700) !important;
@@ -700,6 +716,10 @@
   max-height: clamp(640px, 78vh, 1080px);
   scrollbar-width: thin;
   scrollbar-color: rgba(23, 61, 43, 0.28) transparent;
+}
+
+.reception-shell .table-scroll.table-scroll-4 {
+  max-height: 465px;
 }
 
 .reception-shell .table-scroll::-webkit-scrollbar,
@@ -789,6 +809,15 @@
   padding: 6px 11px;
   cursor: pointer;
   transition: background-color var(--hg-duration) var(--hg-ease), border-color var(--hg-duration) var(--hg-ease);
+}
+
+.reception-shell .table-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  text-decoration: none !important;
+  white-space: nowrap;
 }
 
 .reception-shell .table-action:hover:not(:disabled),
@@ -1437,9 +1466,49 @@
   color: var(--hg-ink-700) !important;
 }
 
+.reception-shell .calendar-scroll.calendar-scroll-6 {
+  overflow: auto;
+  max-height: 380px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(23, 61, 43, 0.28) transparent;
+}
+
+.reception-shell .calendar-scroll.calendar-scroll-6::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+.reception-shell .calendar-scroll.calendar-scroll-6::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.reception-shell .calendar-scroll.calendar-scroll-6::-webkit-scrollbar-thumb {
+  background: rgba(23, 61, 43, 0.22);
+  border-radius: 999px;
+}
+
+.reception-shell .calendar-scroll.calendar-scroll-6::-webkit-scrollbar-thumb:hover {
+  background: rgba(23, 61, 43, 0.36);
+}
+
 .reception-shell .calendar-head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
   background: var(--hg-cream-50);
   border-bottom: 1px solid var(--hg-border);
+}
+
+.reception-shell .calendar-head.room-head {
+  left: 0;
+  z-index: 4;
+}
+
+.reception-shell .calendar-room-label {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--hg-white);
 }
 
 .reception-shell .calendar-room-label,
@@ -1458,7 +1527,7 @@
 }
 
 /* Room Choice Checklist & Warnings */
-.reception-shell .room-choice-list {
+:is(.reception-shell, .ops-modal-body) .room-choice-list {
   display: grid;
   gap: 8px;
   margin: 0;
@@ -1470,14 +1539,14 @@
   overflow-y: auto;
 }
 
-.reception-shell .room-choice-list legend {
+:is(.reception-shell, .ops-modal-body) .room-choice-list legend {
   padding: 0 6px;
   font-size: 12.5px !important;
   font-weight: 700;
   color: var(--hg-ink-700);
 }
 
-.reception-shell .room-choice-list label {
+:is(.reception-shell, .ops-modal-body) .room-choice-list label {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1486,24 +1555,35 @@
   cursor: pointer;
 }
 
-.reception-shell .room-choice-list label:hover {
+:is(.reception-shell, .ops-modal-body) .room-choice-list label:hover {
   background: var(--hg-white);
 }
 
-.reception-shell .room-choice-list label b {
+:is(.reception-shell, .ops-modal-body) .room-choice-list label b {
   margin-left: auto;
   color: var(--hg-moss-900);
 }
 
-.reception-shell .inline-warning {
+:is(.reception-shell, .ops-modal-body) .inline-warning {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   padding: 11px 14px;
   border-radius: var(--hg-radius-md);
   background: var(--hg-warning-bg);
   color: var(--hg-warning-text);
   font-size: 13px !important;
+  line-height: 1.5;
+}
+
+:is(.reception-shell, .ops-modal-body) .inline-warning svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+:is(.reception-shell, .ops-modal-body) .inline-warning.is-danger {
+  background: var(--hg-danger-bg);
+  color: var(--hg-danger-text);
 }
 
 .reception-shell .empty-table,
@@ -1555,7 +1635,7 @@
   .reception-shell .ops-filter-panel {
     padding: 16px;
   }
-  .reception-shell .ops-confirm-summary {
+  :is(.reception-shell, .ops-modal-body) .ops-confirm-summary {
     grid-template-columns: 1fr;
   }
   .reception-shell .usage-form {

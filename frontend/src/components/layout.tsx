@@ -249,52 +249,30 @@ export function PublicLayout() {
                         <strong>{profile?.fullName || user.fullName}</strong>
                         <small>{profile?.email || user.email}</small>
                       </div>
-                      {user.role === 'ROLE_RECEPTIONIST' && (
-                        <Link
-                          role="menuitem"
-                          to="/reception"
-                          onClick={() => {
-                            setAccountOpen(false)
-                            setOpen(false)
-                          }}
-                        >
-                          <LayoutDashboard size={18} /> Khu vực lễ tân
-                        </Link>
-                      )}
-                      {user.role === 'ROLE_ADMIN' && (
-                        <Link
-                          role="menuitem"
-                          to="/admin"
-                          onClick={() => {
-                            setAccountOpen(false)
-                            setOpen(false)
-                          }}
-                        >
-                          <LayoutDashboard size={18} /> Khu vực quản trị
-                        </Link>
-                      )}
                       {user.role === 'ROLE_CUSTOMER' && (
-                        <Link
-                          role="menuitem"
-                          to="/my-bookings"
-                          onClick={() => {
-                            setAccountOpen(false)
-                            setOpen(false)
-                          }}
-                        >
-                          <BedDouble size={18} /> Đơn đặt phòng
-                        </Link>
+                        <>
+                          <Link
+                            role="menuitem"
+                            to="/my-bookings"
+                            onClick={() => {
+                              setAccountOpen(false)
+                              setOpen(false)
+                            }}
+                          >
+                            <BedDouble size={18} /> Đơn đặt phòng
+                          </Link>
+                          <Link
+                            role="menuitem"
+                            to="/profile"
+                            onClick={() => {
+                              setAccountOpen(false)
+                              setOpen(false)
+                            }}
+                          >
+                            <UserRound size={18} /> Thông tin cá nhân
+                          </Link>
+                        </>
                       )}
-                      <Link
-                        role="menuitem"
-                        to="/profile"
-                        onClick={() => {
-                          setAccountOpen(false)
-                          setOpen(false)
-                        }}
-                      >
-                        <UserRound size={18} /> Thông tin cá nhân
-                      </Link>
                       <button type="button" role="menuitem" onClick={logout}>
                         <LogOut size={18} /> Đăng xuất
                       </button>
@@ -314,19 +292,11 @@ export function PublicLayout() {
                     </div>
                   </div>
                   <div className="mobile-account-links">
-                    {user.role === 'ROLE_RECEPTIONIST' && (
-                      <Link to="/reception" onClick={() => setOpen(false)}>
-                        <LayoutDashboard size={17} /> Khu vực lễ tân
+                    {user.role === 'ROLE_CUSTOMER' && (
+                      <Link to="/profile" onClick={() => setOpen(false)}>
+                        <UserRound size={17} /> Thông tin cá nhân
                       </Link>
                     )}
-                    {user.role === 'ROLE_ADMIN' && (
-                      <Link to="/admin" onClick={() => setOpen(false)}>
-                        <LayoutDashboard size={17} /> Khu vực quản trị
-                      </Link>
-                    )}
-                    <Link to="/profile" onClick={() => setOpen(false)}>
-                      <UserRound size={17} /> Thông tin cá nhân
-                    </Link>
                     <button type="button" className="mobile-logout-btn" onClick={logout}>
                       <LogOut size={17} /> Đăng xuất
                     </button>
@@ -575,12 +545,14 @@ export function ReceptionLayout() {
     queryKey: ['reception-deposits'],
     queryFn: () => request(api.get<ApiResponse<Booking[]>>('/reception/deposits/pending')),
     refetchInterval: 30_000,
+    refetchOnMount: 'always',
     refetchOnWindowFocus: true,
   })
   const bookings = useQuery({
     queryKey: ['ops-bookings'],
     queryFn: () => request(api.get<ApiResponse<Booking[]>>('/reception/bookings')),
     refetchInterval: 30_000,
+    refetchOnMount: 'always',
     refetchOnWindowFocus: true,
   })
   const [seenServiceOrderIds, setSeenServiceOrderIds] = useState<Set<number>>(() => {

@@ -28,6 +28,17 @@ function localizeMessage(message: string) {
   if (/booking room does not belong to this booking/i.test(normalized)) return 'Phòng được chọn không thuộc booking này. Vui lòng chọn lại phòng.'
   if (/service is not offered for this room/i.test(normalized)) return 'Dịch vụ này chưa được áp dụng cho phòng đã chọn.'
   if (/room services can only be requested for checked-in bookings/i.test(normalized)) return 'Chỉ có thể ghi nhận dịch vụ cho booking đang lưu trú.'
+  if (/room has an active or future booking/i.test(normalized)) return 'Không thể ngừng hoạt động hoặc chuyển bảo trì vì phòng đang có đơn đặt phòng hiện tại hoặc sắp tới.'
+  if (/an occupied room cannot change status manually/i.test(normalized)) return 'Phòng đang có khách lưu trú, hãy làm thủ tục trả phòng trước khi đổi trạng thái.'
+  if (/an occupied room cannot be taken out of operation/i.test(normalized)) return 'Phòng đang có khách lưu trú, không thể ngừng hoạt động.'
+  if (/an inactive room must be activated before changing its status/i.test(normalized)) return 'Cần kích hoạt lại phòng trước khi đổi trạng thái.'
+  if (/status can only be set to maintenance or cleaning manually/i.test(normalized)) return 'Chỉ có thể chuyển thủ công sang trạng thái Đang dọn hoặc Bảo trì.'
+  if (/room is not in cleaning status/i.test(normalized)) return 'Phòng hiện không ở trạng thái Đang dọn.'
+  if (/payment report must be received by the deposit deadline/i.test(normalized)) return 'Đã quá thời hạn đặt cọc của đơn này.'
+  if (/verification window has expired/i.test(normalized)) return 'Đơn đã quá thời hạn xác minh cọc.'
+  if (/received amount must exactly match the deposit amount/i.test(normalized)) return 'Số tiền thực nhận phải khớp chính xác số tiền cọc yêu cầu.'
+  if (/this bank transaction reference has already been used/i.test(normalized)) return 'Mã giao dịch ngân hàng này đã được sử dụng cho đơn khác.'
+  if (/deposit is not awaiting verification/i.test(normalized)) return 'Khoản cọc này không còn ở trạng thái chờ xác minh.'
   if (/[ăâđêôơưáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ]/i.test(normalized)) return normalized
   const translations: Array<[RegExp, string]> = [
     [/unauthorized|invalid credentials|bad credentials/i, 'Tên đăng nhập hoặc mật khẩu không chính xác.'],

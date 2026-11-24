@@ -7,7 +7,6 @@ import { api, errorMessage, request } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import type { ApiResponse, Booking, Room } from '../../lib/types'
 import { calculateNights, uniqueRoomIds, validStay } from '../../lib/booking-utils'
-import { HgSelect } from '../../components/HgSelect'
 import { EmptyState, ErrorState, LoadingSkeleton } from '../../components/shared'
 import { dateInput, fmtDate, money, RoomImage, RoomRecommendationSection } from './customer-helpers'
 
@@ -43,8 +42,9 @@ export function BookingPage() {
 
   const nav = useNavigate()
   const queryClient = useQueryClient()
-  const [counts, setCounts] = useState<Record<number, number>>({})
   const [bookingFailed, setBookingFailed] = useState(false)
+  const resolvedGuestCount = (capacity: number) =>
+    Math.max(1, Math.min(Number.isFinite(guests) && guests > 0 ? guests : 1, capacity))
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -53,9 +53,7 @@ export function BookingPage() {
           checkInDate: checkIn,
           checkOutDate: checkOut,
           roomIds: ids,
-          guestCounts: Object.fromEntries(
-            (rooms.data || []).map((r) => [r.id, Math.min(r.capacity, counts[r.id] || Math.min(guests, r.capacity))]),
-          ),
+          guestCounts: Object.fromEntries((rooms.data || []).map((r) => [r.id, resolvedGuestCount(r.capacity)])),
           pricingType: 'STANDARD',
         }),
       ),
@@ -161,13 +159,13 @@ export function BookingPage() {
                     <h2>
                       Phòng đã chọn <small>({rooms.data?.length || 0})</small>
                     </h2>
-                    <p>Kiểm tra sức chứa, chọn số khách phù hợp và xem đơn giá mỗi đêm.</p>
+                    <p>Kiểm tra thông tin phòng, số khách đã chọn và đơn giá mỗi đêm.</p>
                   </div>
                 </div>
 
                 <div className="hg-selected-room-list">
                   {rooms.data?.map((r) => {
-                    const selectedGuests = counts[r.id] || Math.min(guests, r.capacity)
+                    const selectedGuests = resolvedGuestCount(r.capacity)
                     return (
                       <div className="hg-selected-room" key={r.id}>
                         <div className="hg-selected-room-thumb">
@@ -178,20 +176,11 @@ export function BookingPage() {
                           <span className="hg-kicker">PHÒNG {r.roomNumber}</span>
                           <h3>{r.roomTypeName}</h3>
                           <p>
-                            <Users size={14} aria-hidden="true" /> Tối đa {r.capacity} khách · Tầng {r.floor}
+                            <Users size={14} aria-hidden="true" /> Tối đa {r.capacity} khách, tầng {r.floor}
                           </p>
-                          <div className="hg-guest-select-inline">
-                            <span>Số khách</span>
-                            <HgSelect
-                              variant="inline"
-                              ariaLabel={`Số khách phòng ${r.roomNumber}`}
-                              value={String(selectedGuests)}
-                              onChange={(value) => setCounts((c) => ({ ...c, [r.id]: Number(value) }))}
-                              options={Array.from({ length: r.capacity }, (_, i) => i + 1).map((n) => ({
-                                value: String(n),
-                                label: `${n} khách`,
-                              }))}
-                            />
+                          <div className="hg-selected-room-guest">
+                            <span>Số khách đã chọn</span>
+                            <strong>{selectedGuests} khách</strong>
                           </div>
                         </div>
 
@@ -272,7 +261,7 @@ export function BookingPage() {
                     {checkIn ? fmtDate(checkIn) : 'Chưa chọn'} — {checkOut ? fmtDate(checkOut) : 'Chưa chọn'}
                   </b>
                   <span>
-                    {nights} đêm · {rooms.data?.length || 0} phòng
+                    {nights} đêm, {rooms.data?.length || 0} phòng
                   </span>
                 </div>
               </div>
@@ -303,12 +292,7 @@ export function BookingPage() {
               <button
                 type="button"
                 className="hg-btn hg-btn-gold full-button"
-                disabled={
-                  !dateValid ||
-                  !ids.length ||
-                  mutation.isPending ||
-                  rooms.data?.some((r) => (counts[r.id] || Math.min(guests, r.capacity)) > r.capacity)
-                }
+                disabled={!dateValid || !ids.length || mutation.isPending}
                 onClick={() => {
                   setBookingFailed(false)
                   mutation.mutate()

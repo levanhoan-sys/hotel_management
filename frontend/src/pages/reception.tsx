@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog } from '../components/ui/dialog'
+import { ConfirmDialog } from '../components/shared/ConfirmDialog'
 import { MoneyInput } from '../components/MoneyInput'
 import { api, errorMessage, request } from '../lib/api'
 import type {
@@ -41,6 +42,77 @@ import './reception-overview.css'
 
 const money = (v: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(v)
+
+function useFourRowTableScroll(rowCount: number) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    const container = scrollRef.current
+    if (!container) return
+
+    const updateHeight = () => {
+      const thead = container.querySelector('thead')
+      const rows = Array.from(container.querySelectorAll('tbody tr'))
+      if (rows.length <= 4) {
+        container.style.maxHeight = ''
+        return
+      }
+      const headerHeight = thead ? thead.getBoundingClientRect().height : 0
+      const fourRowsHeight = rows
+        .slice(0, 4)
+        .reduce((sum, row) => sum + row.getBoundingClientRect().height, 0)
+      if (headerHeight <= 0 && fourRowsHeight <= 0) return
+      const horizontalScrollbar = Math.max(0, container.offsetHeight - container.clientHeight)
+      container.style.maxHeight = `${Math.floor(headerHeight + fourRowsHeight) + horizontalScrollbar}px`
+    }
+
+    updateHeight()
+
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(updateHeight)
+    observer.observe(container)
+    const table = container.querySelector('table')
+    if (table) observer.observe(table)
+    return () => observer.disconnect()
+  }, [rowCount])
+
+  return scrollRef
+}
+
+function useSixRowCalendarScroll(roomCount: number) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    const container = scrollRef.current
+    if (!container) return
+
+    const updateHeight = () => {
+      const labels = Array.from(container.querySelectorAll('.calendar-room-label'))
+      if (labels.length <= 6) {
+        container.style.maxHeight = ''
+        return
+      }
+      const grid = container.querySelector('.calendar-grid') ?? container
+      const gridTop = grid.getBoundingClientRect().top
+      const seventhTop = labels[6].getBoundingClientRect().top
+      const visibleHeight = seventhTop - gridTop
+      if (visibleHeight <= 0) return
+      const horizontalScrollbar = Math.max(0, container.offsetHeight - container.clientHeight)
+      container.style.maxHeight = `${Math.floor(visibleHeight) + horizontalScrollbar}px`
+    }
+
+    updateHeight()
+
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(updateHeight)
+    observer.observe(container)
+    const grid = container.querySelector('.calendar-grid')
+    if (grid) observer.observe(grid)
+    return () => observer.disconnect()
+  }, [roomCount])
+
+  return scrollRef
+}
 
 const date = (value: string) =>
   new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }).format(
@@ -181,10 +253,12 @@ function useOpsData() {
   const rooms = useQuery({
     queryKey: ['ops-rooms'],
     queryFn: () => request(api.get<ApiResponse<Room[]>>('/reception/rooms')),
+    refetchOnMount: 'always',
   })
   const bookings = useQuery({
     queryKey: ['ops-bookings'],
     queryFn: () => request(api.get<ApiResponse<Booking[]>>('/reception/bookings')),
+    refetchOnMount: 'always',
   })
   const customers = useQuery({
     queryKey: ['ops-customers'],
@@ -233,6 +307,12 @@ export function ReceptionHome() {
       ]
     : []
   const recent = [...data].sort((a, b) => b.id - a.id).slice(0, 5)
+  const recentBookingTarget = (booking: Booking) => {
+    if (booking.status === 'PENDING_VERIFICATION') return `/reception/deposits?bookingId=${booking.id}`
+    if (booking.status === 'CONFIRMED') return `/reception/check-in?bookingId=${booking.id}`
+    if (booking.status === 'CHECKED_IN') return `/reception/check-out?bookingId=${booking.id}`
+    return `/reception/bookings?search=${encodeURIComponent(booking.bookingCode)}`
+  }
 
   return (
     <div className="ops-page reception-overview">
@@ -328,15 +408,18 @@ export function ReceptionHome() {
             <ul className="overview-bookings">
               {recent.map((booking) => (
                 <li key={booking.id}>
-                  <span>
-                    <strong>{booking.customerName}</strong>
-                    <small>
-                      {booking.bookingCode} — {booking.roomNumbers?.length || 0} phòng
-                    </small>
-                  </span>
-                  <span className={'status-badge ' + statusTone(booking.status)}>
-                    {bookingNames[booking.status] || booking.status}
-                  </span>
+                  <Link to={recentBookingTarget(booking)} className="overview-booking-link">
+                    <span>
+                      <strong>{booking.customerName}</strong>
+                      <small>
+                        {booking.bookingCode} — {booking.roomNumbers?.length || 0} phòng
+                      </small>
+                    </span>
+                    <span className={'status-badge ' + statusTone(booking.status)}>
+                      {bookingNames[booking.status] || booking.status}
+                    </span>
+                    <ChevronRight size={16} aria-hidden="true" />
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -442,13 +525,28 @@ export function DepositVerificationPage() {
     qrUrl: string
   }
   const qc = useQueryClient()
+  const [searchParams] = useSearchParams()
+  const requestedBookingId = Number(searchParams.get('bookingId'))
   const pending = useQuery({
     queryKey: ['reception-deposits'],
     queryFn: () => request(api.get<ApiResponse<Booking[]>>('/reception/deposits/pending')),
+    refetchOnMount: 'always',
+    refetchInterval: 10_000,
+    refetchOnWindowFocus: true,
   })
-  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [selectedId, setSelectedId] = useState<number | null>(() =>
+    Number.isInteger(requestedBookingId) && requestedBookingId > 0 ? requestedBookingId : null,
+  )
   const [reference, setReference] = useState('')
   const [amount, setAmount] = useState('')
+  const [dialogAction, setDialogAction] = useState<'confirm' | 'reject' | null>(null)
+
+  useEffect(() => {
+    if (Number.isInteger(requestedBookingId) && requestedBookingId > 0) {
+      setSelectedId(requestedBookingId)
+    }
+  }, [requestedBookingId])
+
   const selected = pending.data?.find((item) => item.id === selectedId) || pending.data?.[0]
 
   useEffect(() => {
@@ -479,20 +577,28 @@ export function DepositVerificationPage() {
       ),
     onSuccess: async () => {
       toast.success('Đã xác nhận cọc sau khi đối chiếu')
+      setDialogAction(null)
       setReference('')
       setAmount('')
       await refresh()
     },
-    onError: (e) => toast.error(errorMessage(e)),
+    onError: (e) => {
+      setDialogAction(null)
+      toast.error(errorMessage(e))
+    },
   })
 
   const reject = useMutation({
     mutationFn: () => request(api.post<ApiResponse<unknown>>(`/reception/deposits/${selected!.id}/reject`)),
     onSuccess: async () => {
       toast.success('Đã từ chối xác minh')
+      setDialogAction(null)
       await refresh()
     },
-    onError: (e) => toast.error(errorMessage(e)),
+    onError: (e) => {
+      setDialogAction(null)
+      toast.error(errorMessage(e))
+    },
   })
 
   return (
@@ -577,13 +683,7 @@ export function DepositVerificationPage() {
                     if (!reference.trim()) {
                       return toast.error('Nhập mã giao dịch ngân hàng sau khi đối chiếu')
                     }
-                    if (
-                      window.confirm(
-                        'Tôi xác nhận đã kiểm tra tài khoản ngân hàng của khách sạn và nhận đúng số tiền đặt cọc',
-                      )
-                    ) {
-                      confirm.mutate()
-                    }
+                    setDialogAction('confirm')
                   }}
                 >
                   <label className="form-field">
@@ -592,7 +692,13 @@ export function DepositVerificationPage() {
                   </label>
                   <label className="form-field">
                     <span>Mã giao dịch ngân hàng</span>
-                    <input value={reference} onChange={(e) => setReference(e.target.value)} maxLength={255} required />
+                    <input
+                      value={reference}
+                      onChange={(e) => setReference(e.target.value)}
+                      placeholder="Ví dụ: FT241124001"
+                      maxLength={255}
+                      required
+                    />
                   </label>
                   <button className="button button-dark full-button" disabled={confirm.isPending || reject.isPending}>
                     {confirm.isPending ? 'Đang xác nhận…' : 'Xác nhận đã nhận tiền'}
@@ -601,10 +707,7 @@ export function DepositVerificationPage() {
                     type="button"
                     className="button button-outline full-button"
                     disabled={confirm.isPending || reject.isPending}
-                    onClick={() =>
-                      window.confirm('Từ chối xác minh giao dịch này? Booking sẽ hết hiệu lực giữ phòng') &&
-                      reject.mutate()
-                    }
+                    onClick={() => setDialogAction('reject')}
                   >
                     {reject.isPending ? 'Đang xử lý…' : 'Từ chối xác minh'}
                   </button>
@@ -620,6 +723,25 @@ export function DepositVerificationPage() {
           </section>
         </div>
       )}
+      <ConfirmDialog
+        open={dialogAction !== null}
+        onOpenChange={(open) => {
+          if (!open && !confirm.isPending && !reject.isPending) setDialogAction(null)
+        }}
+        title={dialogAction === 'reject' ? 'Từ chối xác minh tiền cọc' : 'Xác nhận đã nhận tiền cọc'}
+        message={
+          dialogAction === 'reject'
+            ? 'Từ chối xác minh giao dịch này? Booking sẽ hết hiệu lực giữ phòng.'
+            : `Xác nhận đã đối chiếu tài khoản ngân hàng và nhận đủ ${money(Number(amount) || 0)} cho đơn ${selected?.bookingCode || ''} (Mã GD: ${reference.trim()})?`
+        }
+        confirmLabel={dialogAction === 'reject' ? 'Xác nhận từ chối' : 'Xác nhận đã nhận tiền'}
+        tone={dialogAction === 'reject' ? 'danger' : 'primary'}
+        pending={confirm.isPending || reject.isPending}
+        onConfirm={() => {
+          if (dialogAction === 'reject') reject.mutate()
+          else confirm.mutate()
+        }}
+      />
     </div>
   )
 }
@@ -668,19 +790,30 @@ function RoomsManagement() {
     setModalOpen(true)
   }
 
+  useEffect(() => {
+    if (!modalOpen || !editing || form.roomTypeId || !roomTypes.data?.length) return
+    const matchedType = roomTypes.data.find((t) => t.name === editing.roomTypeName)
+    if (matchedType) {
+      setForm((prev) => (prev.roomTypeId ? prev : { ...prev, roomTypeId: String(matchedType.id) }))
+    }
+  }, [modalOpen, editing, form.roomTypeId, roomTypes.data])
+
   const applyRoomTypeImages = (typeId: string, force = false) => {
     const selectedType = roomTypes.data?.find((t) => String(t.id) === typeId)
-    if (!selectedType) return
+    if (!selectedType) {
+      setForm((prev) => ({ ...prev, roomTypeId: typeId }))
+      return
+    }
     const typeImages = selectedType.imageUrls?.length
       ? selectedType.imageUrls
       : selectedType.imageUrl
         ? [selectedType.imageUrl]
         : []
-    if (!typeImages.length) return
     setForm((prev) => ({
       ...prev,
       roomTypeId: typeId,
-      imageUrlsText: force || !prev.imageUrlsText.trim() ? typeImages.join('\n') : prev.imageUrlsText,
+      imageUrlsText:
+        typeImages.length && (force || !prev.imageUrlsText.trim()) ? typeImages.join('\n') : prev.imageUrlsText,
     }))
   }
 
@@ -711,7 +844,7 @@ function RoomsManagement() {
 
   const operational = useMutation({
     mutationFn: ({ room, active }: { room: Room; active: boolean }) =>
-      request(api.patch<ApiResponse<null>>(`/reception/rooms/${room.id}/operational`, null, { params: { active } })),
+      request(api.patch<ApiResponse<null>>(`/reception/rooms/${room.id}/operational`, undefined, { params: { active } })),
     onSuccess: async (_, vars) => {
       toast.success(
         vars.active
@@ -726,8 +859,11 @@ function RoomsManagement() {
 
   const changeStatus = useMutation({
     mutationFn: ({ id, status: next }: { id: number; status: RoomStatus }) =>
-      request(api.patch<ApiResponse<null>>(`/reception/rooms/${id}/status`, null, { params: { status: next } })),
-    onSuccess: invalidate,
+      request(api.patch<ApiResponse<null>>(`/reception/rooms/${id}/status`, undefined, { params: { status: next } })),
+    onSuccess: async (_, vars) => {
+      toast.success(`Đã chuyển trạng thái phòng sang ${roomNames[vars.status] || vars.status}`)
+      await invalidate()
+    },
     onError: (e) => toast.error(errorMessage(e)),
   })
 
@@ -742,6 +878,24 @@ function RoomsManagement() {
 
   const allRooms = rooms.data || []
   const allBookings = bookings.data || []
+  const getBlockingBookings = (room: Room) => {
+    const today = dateValue(new Date())
+    const now = Date.now()
+    return allBookings.filter((b) => {
+      if (b.checkOutDate <= today) return false
+      const matchesRoom =
+        b.rooms?.some((rm) => rm.roomId === room.id || rm.roomNumber === room.roomNumber) ||
+        b.roomNumbers?.includes(room.roomNumber)
+      if (!matchesRoom) return false
+      if (b.status === 'PENDING_DEPOSIT') {
+        return Boolean(b.depositDeadline && Date.parse(b.depositDeadline) > now)
+      }
+      if (b.status === 'PENDING_VERIFICATION') {
+        return Boolean(b.verificationDeadline && Date.parse(b.verificationDeadline) > now)
+      }
+      return ['PENDING', 'CONFIRMED', 'CHECKED_IN'].includes(b.status)
+    })
+  }
   const roomTabs: Array<[string, string]> = [
     ['', 'Tất cả'],
     ['AVAILABLE', 'Sẵn sàng'],
@@ -759,6 +913,7 @@ function RoomsManagement() {
   })
 
   const hasRoomFilters = Boolean(search.trim() || status)
+  const roomTableScrollRef = useFourRowTableScroll(filtered.length)
 
   return (
     <div className="ops-page">
@@ -788,24 +943,17 @@ function RoomsManagement() {
           <section className="panel ops-filter-panel" aria-label="Bộ lọc và tìm kiếm phòng nghỉ">
             <div className="ops-filter-top">
               <div className="ops-status-tabs" role="group" aria-label="Lọc nhanh trạng thái phòng">
-                {roomTabs.map(([value, label]) => {
-                  const count =
-                    value === ''
-                      ? allRooms.length
-                      : allRooms.filter((item) => roomReservationStatus(item, allBookings) === value).length
-                  return (
-                    <button
-                      key={value || 'ALL'}
-                      type="button"
-                      className={status === value ? 'is-active' : ''}
-                      aria-pressed={status === value}
-                      onClick={() => setStatus(value)}
-                    >
-                      <span>{label}</span>
-                      <small>{count}</small>
-                    </button>
-                  )
-                })}
+                {roomTabs.map(([value, label]) => (
+                  <button
+                    key={value || 'ALL'}
+                    type="button"
+                    className={status === value ? 'is-active' : ''}
+                    aria-pressed={status === value}
+                    onClick={() => setStatus(value)}
+                  >
+                    <span>{label}</span>
+                  </button>
+                ))}
               </div>
 
               <div className="ops-result-count">
@@ -862,7 +1010,7 @@ function RoomsManagement() {
           </section>
 
           <section className="panel table-panel">
-            <div className="table-scroll">
+            <div ref={roomTableScrollRef} className="table-scroll table-scroll-4">
               <table>
                 <thead>
                   <tr>
@@ -880,6 +1028,9 @@ function RoomsManagement() {
                   {filtered.map((r) => {
                     const photoCount = r.imageUrls?.length || (r.imageUrl ? 1 : 0)
                     const thumbUrl = r.imageUrl || r.imageUrls?.[0]
+                    const hasBlockingBooking = getBlockingBookings(r).length > 0
+                    const statusOptions: RoomStatus[] =
+                      r.status === 'OCCUPIED' ? ['OCCUPIED'] : ['AVAILABLE', 'CLEANING', 'MAINTENANCE']
                     return (
                       <tr key={r.id}>
                         <td>
@@ -921,11 +1072,12 @@ function RoomsManagement() {
                         </td>
                         <td>
                           <div className="actions-inline">
-                            <button className="table-action" onClick={() => openForm(r)}>
+                            <button type="button" className="table-action" onClick={() => openForm(r)}>
                               Sửa
                             </button>
                             {r.status === 'CLEANING' ? (
                               <button
+                                type="button"
                                 className="table-action"
                                 disabled={cleaned.isPending}
                                 onClick={() => cleaned.mutate(r.id)}
@@ -937,19 +1089,31 @@ function RoomsManagement() {
                                 className="status-select"
                                 aria-label={`Đổi trạng thái phòng ${r.roomNumber}`}
                                 value={r.status}
-                                disabled={changeStatus.isPending}
+                                title={
+                                  !r.operational
+                                    ? 'Kích hoạt lại phòng trước khi đổi trạng thái'
+                                    : r.status === 'OCCUPIED'
+                                      ? 'Phòng đang có khách lưu trú'
+                                      : undefined
+                                }
+                                disabled={changeStatus.isPending || !r.operational || r.status === 'OCCUPIED'}
                                 onChange={(e) => changeStatus.mutate({ id: r.id, status: e.target.value as RoomStatus })}
                               >
-                                {Object.entries(roomNames)
-                                  .filter(([k]) => k !== 'BOOKED')
-                                  .map(([k, v]) => (
-                                    <option key={k} value={k}>
-                                      {v}
-                                    </option>
-                                  ))}
+                                {statusOptions.map((k) => (
+                                  <option
+                                    key={k}
+                                    value={k}
+                                    disabled={k === 'MAINTENANCE' && hasBlockingBooking}
+                                  >
+                                    {k === 'MAINTENANCE' && hasBlockingBooking
+                                      ? `${roomNames[k]} (đang có đơn)`
+                                      : roomNames[k]}
+                                  </option>
+                                ))}
                               </select>
                             )}
                             <button
+                              type="button"
                               className="table-action"
                               disabled={operational.isPending}
                               onClick={() => setConfirmOperational({ room: r, active: !r.operational })}
@@ -969,59 +1133,80 @@ function RoomsManagement() {
         </>
       )}
 
-      {confirmOperational && (
-        <Modal
-          title={
-            confirmOperational.active
-              ? `Kích hoạt phòng ${confirmOperational.room.roomNumber}`
-              : `Ngừng hoạt động phòng ${confirmOperational.room.roomNumber}`
-          }
-          close={() => setConfirmOperational(null)}
-        >
-          <div className="modal-form">
-            <div className="ops-confirm-summary">
-              <div>
-                <span>Phòng</span>
-                <b>
-                  Phòng {confirmOperational.room.roomNumber} — {confirmOperational.room.roomTypeName}
-                </b>
+      {confirmOperational && (() => {
+        const blockingBookings = !confirmOperational.active ? getBlockingBookings(confirmOperational.room) : []
+        const blockedByStayOrBooking =
+          !confirmOperational.active && (confirmOperational.room.status === 'OCCUPIED' || blockingBookings.length > 0)
+
+        return (
+          <Modal
+            title={
+              confirmOperational.active
+                ? `Kích hoạt phòng ${confirmOperational.room.roomNumber}`
+                : `Ngừng hoạt động phòng ${confirmOperational.room.roomNumber}`
+            }
+            close={() => setConfirmOperational(null)}
+          >
+            <div className="modal-form">
+              <div className="ops-confirm-summary">
+                <div>
+                  <span>Phòng</span>
+                  <b>
+                    Phòng {confirmOperational.room.roomNumber} — {confirmOperational.room.roomTypeName}
+                  </b>
+                </div>
+                <div>
+                  <span>Tầng</span>
+                  <b>Tầng {confirmOperational.room.floor}</b>
+                </div>
               </div>
-              <div>
-                <span>Tầng</span>
-                <b>Tầng {confirmOperational.room.floor}</b>
+              {blockedByStayOrBooking ? (
+                <p className="inline-warning is-danger">
+                  <CircleAlert size={15} />
+                  <span>
+                    {confirmOperational.room.status === 'OCCUPIED'
+                      ? 'Phòng đang có khách lưu trú nên chưa thể ngừng hoạt động.'
+                      : `Không thể ngừng hoạt động vì phòng đang có đơn đặt phòng hiệu lực (${blockingBookings
+                          .map((b) => `${b.bookingCode} · ${bookingNames[b.status] || b.status}`)
+                          .join(', ')}). Hãy hủy hoặc đổi phòng cho đơn trước.`}
+                  </span>
+                </p>
+              ) : (
+                <p className="inline-warning">
+                  <CircleAlert size={15} />
+                  <span>
+                    {confirmOperational.active
+                      ? 'Phòng sẽ mở lại để lễ tân và khách hàng có thể đặt phòng.'
+                      : 'Phòng tạm ngừng sẽ không xuất hiện trong danh sách chọn phòng mới cho đến khi được kích hoạt lại.'}
+                  </span>
+                </p>
+              )}
+              <div className="ops-modal-actions">
+                <button
+                  type="button"
+                  className="button button-outline"
+                  disabled={operational.isPending}
+                  onClick={() => setConfirmOperational(null)}
+                >
+                  Đóng
+                </button>
+                <button
+                  type="button"
+                  className={confirmOperational.active ? 'button button-dark' : 'button button-danger'}
+                  disabled={operational.isPending || blockedByStayOrBooking}
+                  onClick={() => operational.mutate(confirmOperational)}
+                >
+                  {operational.isPending
+                    ? 'Đang xử lý…'
+                    : confirmOperational.active
+                      ? 'Xác nhận kích hoạt'
+                      : 'Xác nhận ngừng hoạt động'}
+                </button>
               </div>
             </div>
-            <p className="inline-warning">
-              <CircleAlert size={15} />
-              {confirmOperational.active
-                ? 'Phòng sẽ mở lại để lễ tân và khách hàng có thể đặt phòng.'
-                : 'Phòng tạm ngừng sẽ không xuất hiện trong danh sách chọn phòng mới cho đến khi được kích hoạt lại.'}
-            </p>
-            <div className="ops-modal-actions">
-              <button
-                type="button"
-                className="button button-outline"
-                disabled={operational.isPending}
-                onClick={() => setConfirmOperational(null)}
-              >
-                Đóng
-              </button>
-              <button
-                type="button"
-                className={confirmOperational.active ? 'button button-dark' : 'button button-danger'}
-                disabled={operational.isPending}
-                onClick={() => operational.mutate(confirmOperational)}
-              >
-                {operational.isPending
-                  ? 'Đang xử lý…'
-                  : confirmOperational.active
-                    ? 'Xác nhận kích hoạt'
-                    : 'Xác nhận ngừng hoạt động'}
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
+          </Modal>
+        )
+      })()}
 
       {modalOpen && (
         <Modal title={editing ? `Cập nhật phòng ${editing.roomNumber}` : 'Thêm phòng mới'} close={() => setModalOpen(false)}>
@@ -1259,22 +1444,17 @@ function RoomTypesManagement() {
           <section className="panel ops-filter-panel" aria-label="Bộ lọc và tìm kiếm hạng phòng">
             <div className="ops-filter-top">
               <div className="ops-status-tabs" role="group" aria-label="Lọc theo sức chứa hạng phòng">
-                {capacityTabs.map(([value, label]) => {
-                  const count =
-                    value === '' ? allTypes.length : allTypes.filter((item) => matchesCapacity(item.capacity, value)).length
-                  return (
-                    <button
-                      key={value || 'ALL'}
-                      type="button"
-                      className={capacityFilter === value ? 'is-active' : ''}
-                      aria-pressed={capacityFilter === value}
-                      onClick={() => setCapacityFilter(value)}
-                    >
-                      <span>{label}</span>
-                      <small>{count}</small>
-                    </button>
-                  )
-                })}
+                {capacityTabs.map(([value, label]) => (
+                  <button
+                    key={value || 'ALL'}
+                    type="button"
+                    className={capacityFilter === value ? 'is-active' : ''}
+                    aria-pressed={capacityFilter === value}
+                    onClick={() => setCapacityFilter(value)}
+                  >
+                    <span>{label}</span>
+                  </button>
+                ))}
               </div>
 
               <div className="ops-result-count">
@@ -1475,7 +1655,11 @@ function RoomTypesManagement() {
 
 function BookingsManagement() {
   const { bookings, customers, rooms } = useOpsData()
-  const [search, setSearch] = useState('')
+  const qc = useQueryClient()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const urlSearch = searchParams.get('search') || ''
+  const [search, setSearch] = useState(urlSearch)
   const [status, setStatus] = useState('')
   const [walkInOpen, setWalkInOpen] = useState(false)
   const [walkIn, setWalkIn] = useState({ customerId: '', checkInDate: '', checkOutDate: '', roomIds: [] as number[] })
@@ -1485,6 +1669,27 @@ function BookingsManagement() {
     reason: string
   } | null>(null)
   const invalidate = useInvalidate()
+
+  const verifyDeposit = useMutation({
+    mutationFn: async (b: Booking) => {
+      if (b.status === 'PENDING_DEPOSIT') {
+        await request(api.post<ApiResponse<unknown>>(`/bookings/${b.id}/deposit/report`))
+      }
+      return b.id
+    },
+    onSuccess: async (bookingId) => {
+      await Promise.all([qc.invalidateQueries({ queryKey: ['reception-deposits'] }), invalidate()])
+      navigate(`/reception/deposits?bookingId=${bookingId}`)
+    },
+    onError: async (e) => {
+      toast.error(errorMessage(e))
+      await invalidate()
+    },
+  })
+
+  useEffect(() => {
+    if (urlSearch) setSearch(urlSearch)
+  }, [urlSearch])
 
   const mutation = useMutation({
     mutationFn: ({ id, action, reason }: { id: number; action: 'confirm' | 'reject' | 'cancel'; reason?: string }) =>
@@ -1553,6 +1758,7 @@ function BookingsManagement() {
   })
 
   const hasBookingFilters = Boolean(search.trim() || status)
+  const bookingTableScrollRef = useFourRowTableScroll(filtered.length)
 
   return (
     <div className="ops-page">
@@ -1576,22 +1782,17 @@ function BookingsManagement() {
           <section className="panel ops-filter-panel" aria-label="Bộ lọc và tìm kiếm đơn đặt phòng">
             <div className="ops-filter-top">
               <div className="ops-status-tabs" role="group" aria-label="Lọc nhanh trạng thái đặt phòng">
-                {bookingTabs.map(([value, label]) => {
-                  const count =
-                    value === '' ? allBookings.length : allBookings.filter((item) => item.status === value).length
-                  return (
-                    <button
-                      key={value || 'ALL'}
-                      type="button"
-                      className={status === value ? 'is-active' : ''}
-                      aria-pressed={status === value}
-                      onClick={() => setStatus(value)}
-                    >
-                      <span>{label}</span>
-                      <small>{count}</small>
-                    </button>
-                  )
-                })}
+                {bookingTabs.map(([value, label]) => (
+                  <button
+                    key={value || 'ALL'}
+                    type="button"
+                    className={status === value ? 'is-active' : ''}
+                    aria-pressed={status === value}
+                    onClick={() => setStatus(value)}
+                  >
+                    <span>{label}</span>
+                  </button>
+                ))}
               </div>
 
               <div className="ops-result-count">
@@ -1648,7 +1849,7 @@ function BookingsManagement() {
           </section>
 
           <section className="panel table-panel">
-            <div className="table-scroll">
+            <div ref={bookingTableScrollRef} className="table-scroll table-scroll-4">
               <table>
                 <thead>
                   <tr>
@@ -1719,8 +1920,44 @@ function BookingsManagement() {
                               </button>
                             </>
                           )}
+                          {b.status === 'PENDING_DEPOSIT' && (
+                            <>
+                              <button
+                                type="button"
+                                className="table-action"
+                                disabled={verifyDeposit.isPending || mutation.isPending}
+                                onClick={() => verifyDeposit.mutate(b)}
+                              >
+                                Xác minh cọc
+                              </button>
+                              <button
+                                type="button"
+                                className="table-action danger-outline"
+                                disabled={mutation.isPending || verifyDeposit.isPending}
+                                onClick={() => setConfirmAction({ booking: b, action: 'cancel', reason: '' })}
+                              >
+                                <X size={14} /> Hủy
+                              </button>
+                            </>
+                          )}
+                          {b.status === 'PENDING_VERIFICATION' && (
+                            <>
+                              <Link className="table-action" to={`/reception/deposits?bookingId=${b.id}`}>
+                                Xác minh cọc
+                              </Link>
+                              <button
+                                type="button"
+                                className="table-action danger-outline"
+                                disabled={mutation.isPending}
+                                onClick={() => setConfirmAction({ booking: b, action: 'cancel', reason: '' })}
+                              >
+                                <X size={14} /> Hủy
+                              </button>
+                            </>
+                          )}
                           {b.status === 'CONFIRMED' && (
                             <button
+                              type="button"
                               className="table-action danger-outline"
                               disabled={mutation.isPending}
                               onClick={() => setConfirmAction({ booking: b, action: 'cancel', reason: '' })}
@@ -1728,7 +1965,9 @@ function BookingsManagement() {
                               <X size={14} /> Hủy
                             </button>
                           )}
-                          {!['PENDING', 'CONFIRMED'].includes(b.status) && <span className="muted">—</span>}
+                          {!['PENDING', 'CONFIRMED', 'PENDING_DEPOSIT', 'PENDING_VERIFICATION'].includes(b.status) && (
+                            <span className="muted">—</span>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1925,6 +2164,7 @@ function RoomCalendar() {
     d.setDate(d.getDate() + by)
     setStart(dateValue(d))
   }
+  const calendarScrollRef = useSixRowCalendarScroll(rooms.data?.length ?? 0)
 
   return (
     <div className="ops-page">
@@ -1965,7 +2205,7 @@ function RoomCalendar() {
               <i className="legend-pending" /> Chờ xác nhận
             </span>
           </div>
-          <div className="calendar-scroll">
+          <div ref={calendarScrollRef} className="calendar-scroll calendar-scroll-6">
             <div className="calendar-grid" style={{ gridTemplateColumns: '150px repeat(14, minmax(48px, 1fr))' }}>
               <div className="calendar-head room-head">PHÒNG</div>
               {days.map((day) => (
@@ -2019,12 +2259,24 @@ function CalendarRoom({ room, days, bookings }: { room: Room; days: string[]; bo
 
 function Lifecycle({ kind }: { kind: 'check-in' | 'check-out' }) {
   const { bookings, rooms } = useOpsData()
+  const [searchParams] = useSearchParams()
+  const requestedBookingId = Number(searchParams.get('bookingId'))
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Booking | null>(null)
+  const [confirmCheckInOpen, setConfirmCheckInOpen] = useState(false)
   const invalidate = useInvalidate()
   const eligible = (bookings.data || []).filter((b) =>
     kind === 'check-in' ? b.status === 'CONFIRMED' : b.status === 'CHECKED_IN',
   )
+
+  useEffect(() => {
+    if (!Number.isInteger(requestedBookingId) || requestedBookingId <= 0) return
+    const list = (bookings.data || []).filter((b) =>
+      kind === 'check-in' ? b.status === 'CONFIRMED' : b.status === 'CHECKED_IN',
+    )
+    const match = list.find((b) => b.id === requestedBookingId)
+    if (match) setSelected(match)
+  }, [requestedBookingId, bookings.data, kind])
   const matches = eligible.filter((b) =>
     `${b.bookingCode} ${b.customerName}`.toLowerCase().includes(search.toLowerCase()),
   )
@@ -2039,11 +2291,15 @@ function Lifecycle({ kind }: { kind: 'check-in' | 'check-out' }) {
     mutationFn: (id: number) => request(api.post<ApiResponse<Booking | Invoice>>(`/reception/bookings/${id}/${kind}`)),
     onSuccess: async () => {
       toast.success(kind === 'check-in' ? 'Đã hoàn tất nhận phòng' : 'Đã hoàn tất trả phòng')
+      setConfirmCheckInOpen(false)
       setSelected(null)
       setSearch('')
       await invalidate()
     },
-    onError: (e) => toast.error(errorMessage(e, 'Không thể hoàn tất thao tác này')),
+    onError: (e) => {
+      setConfirmCheckInOpen(false)
+      toast.error(errorMessage(e, 'Không thể hoàn tất thao tác này'))
+    },
   })
 
   return (
@@ -2189,11 +2445,10 @@ function Lifecycle({ kind }: { kind: 'check-in' | 'check-out' }) {
                   </Link>
                 ) : (
                   <button
+                    type="button"
                     className="button button-dark full-button"
                     disabled={mutation.isPending || rooms.isPending || rooms.isError || roomIssues.length > 0}
-                    onClick={() =>
-                      window.confirm(`Xác nhận nhận phòng cho ${selected.customerName}?`) && mutation.mutate(selected.id)
-                    }
+                    onClick={() => setConfirmCheckInOpen(true)}
                   >
                     {mutation.isPending ? 'Đang xử lý…' : 'Xác nhận nhận phòng'} <Check size={16} />
                   </button>
@@ -2213,6 +2468,20 @@ function Lifecycle({ kind }: { kind: 'check-in' | 'check-out' }) {
           </section>
         </div>
       )}
+      <ConfirmDialog
+        open={confirmCheckInOpen && selected !== null}
+        onOpenChange={(open) => {
+          if (!open && !mutation.isPending) setConfirmCheckInOpen(false)
+        }}
+        title="Xác nhận nhận phòng"
+        message={`Xác nhận nhận phòng cho ${selected?.customerName || ''} (đơn ${selected?.bookingCode || ''})?`}
+        confirmLabel="Xác nhận nhận phòng"
+        tone="primary"
+        pending={mutation.isPending}
+        onConfirm={() => {
+          if (selected) mutation.mutate(selected.id)
+        }}
+      />
     </div>
   )
 }
@@ -2363,7 +2632,7 @@ function ServicesManagement() {
   const toggle = useMutation({
     mutationFn: (item: ServiceItem) =>
       request(
-        api.patch<ApiResponse<ServiceItem>>(`/reception/services/${item.id}/active`, null, {
+        api.patch<ApiResponse<ServiceItem>>(`/reception/services/${item.id}/active`, undefined, {
           params: { active: !item.active },
         }),
       ),
@@ -3060,7 +3329,7 @@ function InvoicesManagement() {
 function Modal({ title, close, children }: { title: string; close: () => void; children: React.ReactNode }) {
   return (
     <Dialog open onOpenChange={(open) => !open && close()} title={title}>
-      {children}
+      <div className="ops-modal-body">{children}</div>
     </Dialog>
   )
 }

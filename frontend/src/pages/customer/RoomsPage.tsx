@@ -8,7 +8,7 @@ import { uniqueRoomIds } from '../../lib/booking-utils'
 import { MoneyInput } from '../../components/MoneyInput'
 import { HgSelect } from '../../components/HgSelect'
 import { EmptyState, ErrorState, LoadingSkeleton, StatusBadge } from '../../components/shared'
-import { DateSearch, fmtDate, getRoomImages, money, roomDescription, RoomImage, RoomRecommendationSection } from './customer-helpers'
+import { dateInput, DateSearch, fmtDate, getRoomImages, money, roomDescription, RoomImage, RoomRecommendationSection, tomorrow } from './customer-helpers'
 
 function RoomCardThumb({ room, isReady }: { room: Room; isReady: boolean }) {
   const images = getRoomImages(room)
@@ -74,6 +74,14 @@ export function RoomsPage() {
   const [search, setSearch] = useState(params.get('q') || '')
   const checkIn = params.get('checkIn') || ''
   const checkOut = params.get('checkOut') || ''
+  const defaultCheckIn = tomorrow()
+  const defaultCheckOut = (() => {
+    const d = new Date(`${defaultCheckIn}T12:00:00`)
+    d.setDate(d.getDate() + 1)
+    return dateInput(d)
+  })()
+  const effectiveCheckIn = checkIn || (!checkOut ? defaultCheckIn : '')
+  const effectiveCheckOut = checkOut || (!checkIn ? defaultCheckOut : '')
   const roomTypeId = params.get('roomTypeId') || ''
   const guests = params.get('guests') || ''
   const selectedIds = uniqueRoomIds(params.get('selected'))
@@ -393,19 +401,21 @@ export function RoomsPage() {
             <div className="hg-selection-info">
               <b>{selectedIds.length} phòng đã chọn</b>
               <span>
-                {checkIn && checkOut ? `${fmtDate(checkIn)} — ${fmtDate(checkOut)}` : 'Chọn ngày lưu trú để tiếp tục'}
+                {effectiveCheckIn && effectiveCheckOut && effectiveCheckOut > effectiveCheckIn
+                  ? `${fmtDate(effectiveCheckIn)} — ${fmtDate(effectiveCheckOut)}`
+                  : 'Chọn ngày lưu trú hợp lệ để tiếp tục'}
               </span>
             </div>
             <button
               type="button"
               className="hg-btn hg-btn-gold"
-              disabled={!checkIn || !checkOut || checkOut <= checkIn}
+              disabled={!effectiveCheckIn || !effectiveCheckOut || effectiveCheckOut <= effectiveCheckIn}
               onClick={() => {
                 const next = new URLSearchParams()
                 next.set('roomIds', selectedIds.join(','))
-                next.set('checkIn', checkIn)
-                next.set('checkOut', checkOut)
-                next.set('guests', guests || '1')
+                next.set('checkIn', effectiveCheckIn)
+                next.set('checkOut', effectiveCheckOut)
+                next.set('guests', guests || '2')
                 navigate(`/booking?${next.toString()}`)
               }}
             >

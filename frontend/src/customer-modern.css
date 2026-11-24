@@ -252,6 +252,7 @@
 .customer-site .account-dropdown-identity strong{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.customer-site .account-dropdown-identity small{font-size:12px;overflow-wrap:anywhere;color:#68736c}
 .customer-site .account-dropdown>a,.customer-site .account-dropdown>button{display:flex;align-items:center;gap:11px;width:100%;min-height:42px;padding:9px 12px;border:0;border-radius:7px;background:transparent;color:#27332d;text-align:left;font:600 13px "DM Sans",sans-serif;cursor:pointer;text-decoration:none}
 .customer-site .account-dropdown>a:hover,.customer-site .account-dropdown>button:hover{background:#f1ebdf;color:#173d2b}.customer-site .account-dropdown>button{border-top:1px solid #e6dfd3;border-radius:0;margin-top:4px;padding-top:12px}
+.customer-site .account-dropdown-identity+button{border-top:0;border-radius:7px;margin-top:0;padding-top:9px}
 .customer-site #contact,.customer-site #password{scroll-margin-top:100px}
 @media(max-width:760px){.customer-site .account-menu{width:100%}.customer-site .account-trigger{max-width:none;width:100%;justify-content:flex-start}.customer-site .account-trigger-name{flex:1;text-align:left}.customer-site .account-dropdown{position:static;width:100%;margin-top:8px;box-shadow:none}}
 
