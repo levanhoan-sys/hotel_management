@@ -89,12 +89,6 @@ public class Booking extends BaseEntity {
     @Column(name = "expired_at")
     private Instant expiredAt;
 
-    @Column(name = "cancellation_free_hours")
-    private Integer cancellationFreeHoursSnapshot;
-
-    @Column(name = "cancellation_partial_hours")
-    private Integer cancellationPartialHoursSnapshot;
-
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BookingDetail> details = new ArrayList<>();
 

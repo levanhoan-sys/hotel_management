@@ -8,7 +8,7 @@ The routes below require an authenticated customer who owns the booking. Custome
 - `POST /api/bookings/{bookingId}/deposit/payment`: start a pending deposit attempt. Optional body: `{ "idempotencyKey": "client-generated-stable-key" }`. A reused key for another booking is rejected.
 - `POST /api/bookings/{bookingId}/deposit/demo-complete/{paymentId}`: demo settlement, available only with Spring `dev` or `test` profile. It checks booking ownership, status, deadline, amount, and prior successful deposits while holding a booking row lock.
 
-The demo route simulates backend settlement; it is not a real VNPay callback. Do not expose it in production. No customer booking is moved into the new flow until a usable payment path exists in the UI.
+The demo route simulates backend settlement; it is not a real VNPay callback. Do not expose it in production. Customer bookings use the deposit flow with bank-transfer reporting and receptionist verification.
 
 ## Persistence compatibility
 
@@ -16,4 +16,4 @@ Deposit payments use the existing `payments` table with a `booking_id` and `paym
 
 ## Remaining contract
 
-Cancellation preview and manual refund tracking are available. Hotel cancellation, no-show, automated provider refunds, provider verification, and production payment callbacks are not implemented yet. The current deposit payment flow requires the `dev` or `test` profile and is not a production payment contract.
+Booking cancellation remains available for eligible bookings. Refund records, refund endpoints, automated refunds, and production payment callbacks are not part of the current application. The demo settlement route is restricted to the `test` profile.

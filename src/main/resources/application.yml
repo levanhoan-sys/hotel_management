@@ -39,5 +39,3 @@ hotel:
     deposit-timeout-minutes: 15
     check-in-time: "14:00"
     timezone: Asia/Ho_Chi_Minh
-    cancellation-free-hours: 72
-    cancellation-partial-hours: 24

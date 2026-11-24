@@ -66,5 +66,5 @@ Login/register use the backend bearer JWT. The token is stored in `sessionStorag
 ## Notes
 
 - Customer room selection sends ISO dates (`yyyy-MM-dd`) and `guestCounts` keyed by room ID. Price and availability remain backend decisions; a 409 conflict is shown to the user.
-- Booking notes, online deposit/gateway payment, refunds, and invoice PDF generation are not represented as working features because no matching backend contract exists.
+- Refund processing and invoice PDF generation are not represented as working features. Deposits use the backend bank-transfer reporting and receptionist verification flow.
 - Reception checkout is only completed after an issued invoice has been fully paid according to backend state. Payment recording is limited to supported manual methods; the current UI records cash.

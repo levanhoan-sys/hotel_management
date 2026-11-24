@@ -29,7 +29,7 @@ Room detail now includes `areaSqm`, comma-separated `amenities`, and active `ser
 
 | Method | Endpoint | Request/query | Response data | Access |
 |---|---|---|---|---|
-| POST | `/bookings` | `{ checkInDate, checkOutDate, roomIds: number[], guestCounts?: { [roomId]: positive number }, pricingType? }` | `BookingResponse` | Customer token; backend derives customerId. Empty/duplicate rooms are rejected by business validation. |
+| POST | `/bookings` | `{ checkInDate, checkOutDate, roomIds: number[], guestCounts?: { [roomId]: positive number } }` | `BookingResponse` | Customer token; backend derives customerId. Room price uses the room type's fixed base price. Empty/duplicate rooms are rejected by business validation. |
 | GET | `/bookings/me` | — | `BookingResponse[]` | Customer |
 | GET | `/bookings/my` | `page` default 0, `size` default 20 (1–100) | Spring page of `BookingResponse` | Customer |
 | GET | `/bookings/{id}` | — | `BookingResponse` | Owner or receptionist |

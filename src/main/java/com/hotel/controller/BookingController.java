@@ -15,7 +15,6 @@ import org.springframework.security.core.Authentication;
 import com.hotel.repository.CustomerRepository;
 import com.hotel.exception.BadRequestException;
 import com.hotel.service.ReceptionService;
-import com.hotel.service.impl.CancellationPolicyService;
 import com.hotel.dto.request.AddServiceOrderRequest;
 import com.hotel.dto.request.BookingActionRequest;
 import org.springframework.data.domain.PageRequest;
@@ -29,7 +28,6 @@ public class BookingController {
     private final BookingService bookingService;
     private final CustomerRepository customers;
     private final ReceptionService receptionService;
-    private final CancellationPolicyService cancellationPolicy;
 
     @PostMapping
     public ResponseEntity<ApiResponse<BookingResponse>> createBooking(@Valid @RequestBody BookingRequest request, Authentication authentication) {
@@ -79,13 +77,8 @@ public class BookingController {
     public ResponseEntity<ApiResponse<Void>> cancelBooking(@PathVariable Long id, Authentication authentication,
             @RequestBody(required = false) @Valid BookingActionRequest request) {
         ensureOwnerOrStaff(bookingService.getBookingById(id), authentication);
-        cancellationPolicy.cancel(id, authentication.getName(), request == null ? null : request.reason());
+        bookingService.cancelBooking(id, authentication.getName(), request == null ? null : request.reason());
         return ResponseEntity.ok(ApiResponse.ok(null, "Booking cancelled successfully"));
-    }
-
-    @GetMapping("/{id}/cancellation-preview")
-    public ApiResponse<CancellationPolicyService.Preview> cancellationPreview(@PathVariable Long id, Authentication authentication) {
-        return ApiResponse.ok(cancellationPolicy.preview(id, authentication.getName()));
     }
 
     private void ensureOwnerOrStaff(BookingResponse booking, Authentication auth) {

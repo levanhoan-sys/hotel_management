@@ -36,7 +36,7 @@ Hotel Management System hỗ trợ quản lý danh mục phòng, tìm phòng the
 - Chọn nhiều phòng vật lý cho một booking.
 - Gửi yêu cầu đặt phòng với kiểm tra availability phía backend.
 - Thanh toán cọc qua chuyển khoản VietQR; báo đã chuyển khoản để lễ tân xác minh.
-- Xem booking, trạng thái cọc, lịch sử hoàn tiền; hủy theo chính sách backend.
+- Xem booking và trạng thái cọc; hủy booking khi đơn còn ở trạng thái cho phép.
 - Yêu cầu dịch vụ khi lưu trú và xem hóa đơn.
 - Xem vị trí khách sạn/chỉ đường Google Maps; liên hệ Zalo/Hotline nếu đã cấu hình.
 - Xem gợi ý phòng liên quan hoặc phòng thay thế dựa trên luật về giá, sức chứa, hạng phòng và tiện nghi.
@@ -47,7 +47,7 @@ Hotel Management System hỗ trợ quản lý danh mục phòng, tìm phòng the
 - Tạo, xác nhận, từ chối, hủy booking; đổi phòng khi thỏa điều kiện.
 - Xác minh/từ chối báo cáo chuyển khoản.
 - Check-in/check-out; quản lý trạng thái phòng và thời gian khóa phòng.
-- Quản lý loại phòng, dịch vụ, hóa đơn, khoản thanh toán và tác vụ hoàn tiền.
+- Quản lý loại phòng, dịch vụ, hóa đơn và khoản thanh toán.
 
 Role trong source: ROLE_CUSTOMER, ROLE_RECEPTIONIST, ROLE_ADMIN. React hiện chỉ cho ROLE_CUSTOMER vào khu customer và ROLE_RECEPTIONIST vào khu lễ tân.
 
@@ -83,7 +83,7 @@ flowchart LR
     C --> EXT[Google Maps / Zalo / Hotline]
 ```
 
-Các module backend chính: controller, DTO, service/impl, repository, entity/enums, security/config và strategy/pricing.
+Các module backend chính: controller, DTO, service/impl, repository, entity/enums, security/config.
 
 ## 5. Cấu trúc thư mục
 
@@ -98,7 +98,6 @@ hotel-management-system/
 │   ├── repository/  # Truy vấn dữ liệu
 │   ├── security/    # JWT filter/service
 │   ├── service/     # Nghiệp vụ
-│   └── strategy/    # Chiến lược giá/thanh toán
 ├── src/main/resources/ # YAML, schema và dữ liệu seed
 ├── src/test/java/      # Backend tests
 ├── frontend/src/
@@ -234,9 +233,9 @@ Booking lưu từng phòng vật lý trong BookingDetail. Khoảng ngày dùng q
 
 Khách chỉ báo đã chuyển khoản; thao tác này không đánh dấu payment thành công. Lễ tân kiểm tra sao kê, xác nhận số tiền chính xác và mã giao dịch chưa dùng. QR là ảnh lấy từ dịch vụ VietQR bên ngoài. Chi tiết: [VIETQR_INTEGRATION.md](VIETQR_INTEGRATION.md), [DEPOSIT_PAYMENT_FLOW.md](DEPOSIT_PAYMENT_FLOW.md), [MANUAL_PAYMENT_VERIFICATION.md](MANUAL_PAYMENT_VERIFICATION.md).
 
-### Lưu trú, hóa đơn và hoàn tiền
+### Lưu trú và hóa đơn
 
-Lễ tân check-in booking đã xác nhận, ghi nhận dịch vụ phát sinh, lập/cập nhật và phát hành hóa đơn, ghi nhận khoản thanh toán rồi hoàn tất check-out theo trạng thái backend. Có luồng theo dõi và xử lý hoàn tiền bởi nhân viên; hệ thống không tự chuyển tiền hoàn tới ngân hàng.
+Lễ tân check-in booking đã xác nhận, ghi nhận dịch vụ phát sinh, lập/cập nhật và phát hành hóa đơn, ghi nhận khoản thanh toán rồi hoàn tất check-out theo trạng thái backend. Hệ thống hiện không cung cấp luồng hoàn tiền.
 
 ## 10. Cơ sở dữ liệu
 
@@ -247,7 +246,7 @@ Lễ tân check-in booking đã xác nhận, ghi nhận dịch vụ phát sinh, 
 | User, Customer, Employee, Receptionist, Admin | Tài khoản/phân loại người dùng; inheritance JOINED |
 | RoomType, Room, ServiceItem | Hạng phòng, phòng vật lý, dịch vụ |
 | Booking, BookingDetail, RoomBlock | Booking, phòng trong booking, khoảng phòng bị khóa |
-| Payment, Invoice, InvoiceItem, Refund | Cọc/số dư, hóa đơn và hoàn tiền |
+| Payment, Invoice, InvoiceItem | Cọc/số dư và hóa đơn |
 | ServiceOrder | Dịch vụ sử dụng trong booking |
 
 Một khách có nhiều booking; booking có nhiều booking detail; mỗi detail tham chiếu phòng vật lý; phòng thuộc một RoomType. Booking liên quan đến payment, invoice và service order. Sơ đồ hiện có tại [docs/hotel_management_uml_design.md](docs/hotel_management_uml_design.md); tài liệu UML có thể chưa theo kịp thay đổi mới, vì vậy entity/repository hiện tại mới là nguồn chuẩn.
@@ -267,7 +266,7 @@ Base URL local: http://localhost:8080/api. Response thông thường dùng ApiRe
 | Xác minh cọc | GET /reception/deposits/pending, POST /reception/deposits/{bookingId}/confirm, POST /reception/deposits/{bookingId}/reject |
 | Vận hành | GET /reception/summary, GET /reception/bookings, POST /reception/bookings/{id}/check-in, POST /reception/bookings/{id}/check-out |
 | Hóa đơn/dịch vụ | Các route /reception/invoices/**, /reception/services/** và /bookings/{id}/services |
-| Hồ sơ/hoàn tiền | /users/me, /bookings/{id}/refunds, /reception/refunds |
+| Hồ sơ | /users/me, /users/me/password |
 
 Recommendation nhận referenceRoomId hoặc roomTypeId, checkIn/checkOut, guests, roomQuantity, alternatives và limit. Có ngày thì gợi ý kiểm availability theo query hiện có; không có ngày thì không khẳng định số phòng còn trống. Scoring là rule-based, không dùng AI/ML.
 
@@ -292,7 +291,7 @@ Trong lần cập nhật README này không chạy lại test suite; không côn
 ## 13. Hạn chế hiện tại
 
 - Tiền cọc được xác minh thủ công bởi lễ tân; chưa có webhook ngân hàng. Ảnh QR được tải từ dịch vụ VietQR ngoài.
-- Hoàn tiền do nhân viên xử lý; không có tích hợp chuyển tiền hoàn tự động.
+- Hệ thống chưa cung cấp luồng hoàn tiền.
 - Source có strategy CASH/CREDIT_CARD/VNPAY nhưng không đồng nghĩa đã tích hợp nhà cung cấp gateway; thanh toán số dư hiện là quy trình ghi nhận thủ công của lễ tân.
 - Admin có entity/role enum nhưng chưa có console/cấp tài khoản quản trị hoàn chỉnh. Guard React hiện chỉ cho ROLE_RECEPTIONIST vào UI lễ tân.
 - Cấu hình root/root và JWT development chỉ phục vụ local; phải thay trước khi triển khai.
@@ -302,7 +301,7 @@ Trong lần cập nhật README này không chạy lại test suite; không côn
 ## 14. Hướng phát triển
 
 - Tích hợp gateway/ngân hàng với webhook xác thực và đối soát tự động.
-- Tích hợp hoàn tiền thật, email/SMS và cơ chế retry.
+- Tích hợp email/SMS và cơ chế retry.
 - Hoàn thiện Admin, cấp tài khoản và phân quyền chi tiết.
 - Bổ sung migration versioning, observability, deployment production và E2E tests.
 - Bổ sung đánh giá, báo cáo doanh thu và hiệu chỉnh trọng số recommendation.

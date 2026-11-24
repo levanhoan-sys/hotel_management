@@ -12,7 +12,7 @@ Dự án xây dựng một ứng dụng web quản lý khách sạn đáp ứng 
 ### 1.1. Các nhóm người dùng (Actors)
 * **Khách hàng (Customer):** Đăng ký tài khoản, tìm kiếm phòng trống theo ngày, xem chi tiết phòng, đặt phòng (Booking) trực tuyến, theo dõi lịch sử đặt phòng.
 * **Lễ tân (Receptionist):** Quản lý trạng thái phòng thời gian thực, làm thủ tục Check-in (nhận phòng), Check-out (trả phòng), gán dịch vụ (giặt ủi, ăn uống, minibar) vào phòng, in hóa đơn.
-* **Quản trị viên (Admin):** Quản lý toàn bộ danh mục phòng, loại phòng, tài khoản nhân viên, cấu hình bảng giá & chiến lược giá, xem báo cáo thống kê doanh thu.
+* **Quản trị viên (Admin):** Quản lý danh mục phòng, loại phòng và tài khoản nhân viên; xem thống kê doanh thu.
 
 ---
 
@@ -26,14 +26,12 @@ Dự án xây dựng một ứng dụng web quản lý khách sạn đáp ứng 
    * Lớp người dùng cơ sở `User` được kế thừa bởi `Customer` và `Employee`.
    * Lớp `Employee` tiếp tục được kế thừa bởi `Receptionist` và `Admin`.
 3. **Tính đa hình (Polymorphism):**
-   * `PricingStrategy.computePrice()` được triển khai cho giá tiêu chuẩn, cuối tuần và ngày lễ.
-   * Thanh toán hiện được kiểm tra và ghi nhận trong `InvoiceServiceImpl`; dự án không sử dụng payment strategy/gateway giả lập.
+   * Các lớp `User` và `Employee` hỗ trợ xử lý theo kiểu đa hình trong mô hình tài khoản.
 4. **Tính trừu tượng (Abstraction):**
-   * Trừu tượng hóa qua các lớp người dùng cơ sở (`User`, `Employee`) và interface `PricingStrategy`.
+   * Trừu tượng hóa qua các lớp người dùng cơ sở (`User`, `Employee`).
 
 ### 2.2. Design Patterns áp dụng
-* **Strategy Pattern:** Áp dụng cho thuật toán tính giá ngày thường/cuối tuần/ngày lễ.
-* **Factory Pattern:** `PricingStrategyFactory` chọn chiến lược giá. Thanh toán không dùng Strategy/Factory; backend chỉ ghi nhận phương thức được hỗ trợ trong `InvoiceServiceImpl`.
+* Giá phòng dùng cố định `RoomType.basePrice`; tổng tiền phòng bằng giá cơ bản nhân số đêm.
 
 ---
 
@@ -142,7 +140,6 @@ classDiagram
     class Admin {
         -String permissions
         +addRoom(Room room) void
-        +updatePriceStrategy(PricingStrategy strategy) void
         +viewRevenueReport(LocalDate from, LocalDate to) Report
     }
 
@@ -151,7 +148,7 @@ classDiagram
     Employee <|-- Receptionist
     Employee <|-- Admin
 
-    %% ---------------- ROOM & PRICING (STRATEGY PATTERN) ----------------
+    %% ---------------- ROOM & FIXED BASE PRICE ----------------
     class Room {
         -Long id
         -String roomNumber
@@ -159,7 +156,7 @@ classDiagram
         -RoomStatus status
         -RoomType roomType
         +isAvailable(LocalDate from, LocalDate to) boolean
-        +calculateFinalPrice(int nights, PricingStrategy strategy) double
+        +calculateFinalPrice(int nights) double
     }
 
     class RoomType {
@@ -171,29 +168,6 @@ classDiagram
         +getBasePrice() double
     }
 
-    class PricingStrategy {
-        <<interface>>
-        +computePrice(double basePrice, int nights) double
-    }
-
-    class StandardPricing {
-        +computePrice(double basePrice, int nights) double
-    }
-
-    class WeekendPricing {
-        -double surchargeRate
-        +computePrice(double basePrice, int nights) double
-    }
-
-    class HolidayPricing {
-        -double holidayMultiplier
-        +computePrice(double basePrice, int nights) double
-    }
-
-    PricingStrategy <|.. StandardPricing
-    PricingStrategy <|.. WeekendPricing
-    PricingStrategy <|.. HolidayPricing
-    Room --> PricingStrategy : uses
     Room --> RoomType : belongs to
     Room --> RoomStatus : has
 
@@ -316,7 +290,7 @@ stateDiagram-v2
 
 ## 7. CẤU TRÚC DỰ ÁN CHI TIẾT THEO CÁC TẦNG (LAYERED ARCHITECTURE)
 
-Dự án tổ chức theo các tầng `Controller` → `Service` → `Repository` → `Database`, đồng thời tách biệt các gói `dto`, `entity`, `enums`, `exception`, `config` và `strategy/pricing`.
+Dự án tổ chức theo các tầng `Controller` → `Service` → `Repository` → `Database`, đồng thời tách biệt các gói `dto`, `entity`, `enums`, `exception` và `config`.
 
 ```text
 hotel-management-system/
@@ -361,13 +335,6 @@ hotel-management-system/
 │   │   │   │   ├── ServiceItemRepository.java
 │   │   │   │   └── InvoiceRepository.java
 │   │   │   │
-│   │   │   ├── strategy/                   # Chiến lược tính giá
-│   │   │   │   ├── pricing/                 # Chiến lược tính giá phòng
-│   │   │   │   │   ├── PricingStrategy.java
-│   │   │   │   │   ├── StandardPricing.java
-│   │   │   │   │   ├── WeekendPricing.java
-│   │   │   │   │   ├── HolidayPricing.java
-│   │   │   │   │   └── PricingStrategyFactory.java
 │   │   │   ├── dto/                        # Tầng DTO (Data Transfer Object)
 │   │   │   │   ├── request/
 │   │   │   │   │   ├── AuthRequest.java
@@ -423,7 +390,7 @@ hotel-management-system/
 
 2. **Thành viên 2:**
    * Quản lý danh mục phòng: `Room`, `RoomType`, `RoomRepository`.
-   * Phụ trách tầng `strategy/pricing/` (`StandardPricing`, `WeekendPricing`, `HolidayPricing`).
+   * Phụ trách danh mục `Room`, `RoomType`, giá cơ bản và `RoomRepository`.
    * Phụ trách `RoomController`, `RoomService` và thuật toán tra cứu phòng trống.
 
 3. **Thành viên 3:**

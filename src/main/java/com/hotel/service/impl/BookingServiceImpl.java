@@ -18,8 +18,6 @@ import com.hotel.repository.CustomerRepository;
 import com.hotel.repository.RoomBlockRepository;
 import com.hotel.repository.RoomRepository;
 import com.hotel.service.BookingService;
-import com.hotel.strategy.pricing.PricingStrategy;
-import com.hotel.strategy.pricing.PricingStrategyFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,7 +41,6 @@ public class BookingServiceImpl implements BookingService {
     private final CustomerRepository customerRepository;
     private final RoomRepository roomRepository;
     private final RoomBlockRepository roomBlockRepository;
-    private final PricingStrategyFactory pricingStrategyFactory;
     private final HotelBookingProperties bookingProperties;
 
     @Override
@@ -91,12 +88,10 @@ public class BookingServiceImpl implements BookingService {
         validateGuestCountKeys(request.getGuestCounts(), requestedIds);
 
         Customer owner = customer;
-        PricingStrategy pricing = pricingStrategyFactory.getStrategy(request.getPricingType());
         Booking booking = new Booking(owner, request.getCheckInDate(), request.getCheckOutDate());
         booking.setStatus(depositRequired ? BookingStatus.PENDING_DEPOSIT : BookingStatus.PENDING);
         for (Room room : rooms) {
-            double fixedNightlyPrice = pricing.computePrice(room.getRoomType().getBasePrice(), 1);
-            booking.addBookingDetail(room, fixedNightlyPrice, guestCount(request.getGuestCounts(), room.getId()));
+            booking.addBookingDetail(room, room.getRoomType().getBasePrice(), guestCount(request.getGuestCounts(), room.getId()));
         }
 
         if (depositRequired) {
@@ -107,8 +102,6 @@ public class BookingServiceImpl implements BookingService {
             booking.setDepositAmount(roomTotal.multiply(bookingProperties.depositRate()).setScale(0, RoundingMode.HALF_UP));
             booking.setDepositDeadline(Instant.now().plusSeconds(bookingProperties.depositTimeoutMinutes() * 60L));
             booking.setTransferContent("COC " + booking.getBookingCode().replaceAll("[^A-Z0-9]", ""));
-            booking.setCancellationFreeHoursSnapshot(bookingProperties.cancellationFreeHours());
-            booking.setCancellationPartialHoursSnapshot(bookingProperties.cancellationPartialHours());
         }
 
         return BookingResponse.fromEntity(bookingRepository.save(booking));
@@ -181,7 +174,6 @@ public class BookingServiceImpl implements BookingService {
         if (lockedRooms.size() != lockIds.size()) throw new ResourceNotFoundException("One or more selected rooms do not exist");
         Map<Long, Room> byId = new java.util.HashMap<>();
         lockedRooms.forEach(room -> byId.put(room.getId(), room));
-        PricingStrategy standardPricing = pricingStrategyFactory.getStrategy("STANDARD");
         List<BookingDetail> replacement = new ArrayList<>();
 
         for (Long roomId : requestedIds) {
@@ -198,7 +190,7 @@ public class BookingServiceImpl implements BookingService {
             if (guests < 1 || guests > room.getRoomType().getCapacity())
                 throw new BadRequestException("Guest count is invalid for room " + room.getRoomNumber());
             replacement.add(new BookingDetail(booking, room,
-                    standardPricing.computePrice(room.getRoomType().getBasePrice(), 1), guests));
+                    room.getRoomType().getBasePrice(), guests));
         }
         validateGuestCountKeys(request.guestCounts(), requestedIds);
         booking.replaceRooms(replacement);

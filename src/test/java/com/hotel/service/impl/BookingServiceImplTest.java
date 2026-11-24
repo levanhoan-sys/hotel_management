@@ -12,7 +12,6 @@ import com.hotel.repository.BookingRepository;
 import com.hotel.repository.CustomerRepository;
 import com.hotel.repository.RoomBlockRepository;
 import com.hotel.repository.RoomRepository;
-import com.hotel.strategy.pricing.PricingStrategyFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,13 +35,12 @@ class BookingServiceImplTest {
     @Mock CustomerRepository customers;
     @Mock RoomRepository rooms;
     @Mock RoomBlockRepository blocks;
-    @Mock PricingStrategyFactory pricing;
     BookingServiceImpl service;
     Customer customer;
 
     @BeforeEach void setUp() {
-        service = new BookingServiceImpl(bookings, customers, rooms, blocks, pricing,
-                new HotelBookingProperties(new BigDecimal("0.30"), 15, LocalTime.of(14, 0), ZoneId.of("Asia/Ho_Chi_Minh"), 72, 24));
+        service = new BookingServiceImpl(bookings, customers, rooms, blocks,
+                new HotelBookingProperties(new BigDecimal("0.30"), 15, LocalTime.of(14, 0), ZoneId.of("Asia/Ho_Chi_Minh")));
         customer = new Customer("guest", "encoded", "Guest", "guest@example.com", null, null, null);
         customer.setId(4L);
         when(customers.findById(4L)).thenReturn(Optional.of(customer));

@@ -29,6 +29,4 @@ public class BookingRequest {
 
     private Map<Long, @Positive Integer> guestCounts;
 
-    // Optional pricing strategy name: "STANDARD", "WEEKEND", "HOLIDAY"
-    private String pricingType = "STANDARD";
 }

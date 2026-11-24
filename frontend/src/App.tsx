@@ -16,7 +16,6 @@ const ReceptionPage = lazy(() => import('./pages/reception').then(m => ({ defaul
 const DepositVerificationPage = lazy(() => import('./pages/reception').then(m => ({ default: m.DepositVerificationPage })))
 const AdminHome = lazy(() => import('./pages/admin').then(m => ({ default: m.AdminHome })))
 const AdminEmployees = lazy(() => import('./pages/admin').then(m => ({ default: m.AdminEmployees })))
-const AdminPricing = lazy(() => import('./pages/admin').then(m => ({ default: m.AdminPricing })))
 
 export function Guard({ staff, children }: { staff?: 'reception' | 'admin'; children: React.ReactNode }) {
   const { user, loading } = useAuth()
@@ -58,7 +57,6 @@ export default function App() {
     <Route path="/admin" element={<Guard staff="admin"><AdminLayout /></Guard>}>
       <Route index element={<AdminHome />} />
       <Route path="employees" element={<AdminEmployees />} />
-      <Route path="pricing" element={<AdminPricing />} />
       <Route path="rooms" element={<ReceptionPage kind="rooms" />} />
       <Route path="room-types" element={<ReceptionPage kind="room-types" />} />
       <Route path="services" element={<ReceptionPage kind="services" />} />

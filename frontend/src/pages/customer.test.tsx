@@ -48,7 +48,7 @@ describe('customer portal flows', () => {
     fireEvent.click(screen.getByRole('button', { name: /tiếp tục đặt phòng/i }))
     expect(await screen.findByText('Phòng đã chọn')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /gửi yêu cầu đặt phòng/i }))
-    await waitFor(() => expect(post).toHaveBeenCalledWith('/bookings', expect.objectContaining({ checkInDate: '2030-05-13', checkOutDate: '2030-05-14', roomIds: [1, 2], pricingType: 'STANDARD' })))
+    await waitFor(() => expect(post).toHaveBeenCalledWith('/bookings', expect.objectContaining({ checkInDate: '2030-05-13', checkOutDate: '2030-05-14', roomIds: [1, 2] })))
   })
 
   it('asks for confirmation and sends booking cancellation through the API', async () => {

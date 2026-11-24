@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { BedDouble, CalendarDays, ChevronDown, ClipboardList, ConciergeBell, DoorOpen, LayoutDashboard, LogOut, Menu, ReceiptText, ShieldCheck, Sparkles, Users, X, UserCog, SlidersHorizontal } from 'lucide-react'
+import { BedDouble, CalendarDays, ChevronDown, ClipboardList, ConciergeBell, DoorOpen, LayoutDashboard, LogOut, Menu, ReceiptText, ShieldCheck, Sparkles, Users, X, UserCog } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { FloatingContactButtons } from './FloatingContactButtons'
 import { api, request } from '../lib/api'
@@ -63,7 +63,6 @@ export function ReceptionLayout() {
 const adminNavItems = [
   { to: '/admin', label: 'Tổng quan', icon: LayoutDashboard, end: true },
   { to: '/admin/employees', label: 'Nhân viên', icon: UserCog },
-  { to: '/admin/pricing', label: 'Chiến lược giá', icon: SlidersHorizontal },
   { to: '/admin/rooms', label: 'Phòng nghỉ', icon: BedDouble },
   { to: '/admin/room-types', label: 'Hạng phòng', icon: DoorOpen },
   { to: '/admin/services', label: 'Dịch vụ', icon: ConciergeBell },
@@ -73,5 +72,5 @@ export function AdminLayout() {
   const { user, signOut } = useAuth()
   const nav = useNavigate()
   const logout = () => { signOut(); nav('/login') }
-  return <div className="reception-shell"><aside className={open ? 'sidebar open' : 'sidebar'}><Link to="/admin" className="brand side-brand"><span className="brand-mark">H</span><span>HOÀNG GIA <small>KHÁCH SẠN</small></span></Link><div className="side-section">QUẢN TRỊ HỆ THỐNG</div><nav className="side-nav">{adminNavItems.map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end} onClick={() => setOpen(false)}><Icon size={17} strokeWidth={1.8} /><span className="side-nav-label">{label}</span></NavLink>)}</nav><div className="side-bottom"><div className="side-help"><SlidersHorizontal size={16} /><span>Quản trị hệ thống<br /><b>Danh mục và nhân sự</b></span></div><button onClick={logout} className="side-logout"><LogOut size={16} /> Đăng xuất</button></div></aside><main className="reception-main"><header className="reception-top"><button className="mobile-nav-toggle side-toggle" aria-label="Mở menu" onClick={() => setOpen(!open)}><Menu /></button><div><span className="eyebrow">HOÀNG GIA · QUẢN TRỊ</span><h1>Chào {user?.fullName?.split(' ').slice(-1)[0] || 'bạn'}</h1></div><div className="top-user"><div className="avatar">{user?.fullName?.charAt(0) || 'A'}</div><div><b>{user?.fullName}</b><span>Quản trị viên</span></div><ChevronDown size={16} /></div></header><div className="workspace"><Outlet /></div></main></div>
+  return <div className="reception-shell"><aside className={open ? 'sidebar open' : 'sidebar'}><Link to="/admin" className="brand side-brand"><span className="brand-mark">H</span><span>HOÀNG GIA <small>KHÁCH SẠN</small></span></Link><div className="side-section">QUẢN TRỊ HỆ THỐNG</div><nav className="side-nav">{adminNavItems.map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end} onClick={() => setOpen(false)}><Icon size={17} strokeWidth={1.8} /><span className="side-nav-label">{label}</span></NavLink>)}</nav><div className="side-bottom"><div className="side-help"><UserCog size={16} /><span>Quản trị hệ thống<br /><b>Danh mục và nhân sự</b></span></div><button onClick={logout} className="side-logout"><LogOut size={16} /> Đăng xuất</button></div></aside><main className="reception-main"><header className="reception-top"><button className="mobile-nav-toggle side-toggle" aria-label="Mở menu" onClick={() => setOpen(!open)}><Menu /></button><div><span className="eyebrow">HOÀNG GIA · QUẢN TRỊ</span><h1>Chào {user?.fullName?.split(' ').slice(-1)[0] || 'bạn'}</h1></div><div className="top-user"><div className="avatar">{user?.fullName?.charAt(0) || 'A'}</div><div><b>{user?.fullName}</b><span>Quản trị viên</span></div><ChevronDown size={16} /></div></header><div className="workspace"><Outlet /></div></main></div>
 }
