@@ -13,7 +13,7 @@ import {
   fmtDate,
   money,
   roomDescription,
-  RoomImage,
+  RoomGallery,
   RoomRecommendationSection,
 } from './customer-helpers'
 
@@ -224,15 +224,13 @@ export function RoomDetailPage() {
 
         <div className="hg-detail-layout">
           <div>
-            <div className="hg-detail-hero-media">
-              <RoomImage room={r} large />
-            </div>
+            <RoomGallery room={r} />
             <div className="hg-detail-intro">
               <span className="hg-kicker">KHÔNG GIAN RIÊNG CỦA BẠN</span>
               <h1 className="hg-serif-em">
                 {r.roomTypeName}
                 <br />
-                <em>mang hơi thở an yên.</em>
+                <em>mang hơi thở an yên</em>
               </h1>
               <p>{roomDescription(r.description)}</p>
               <div className="hg-detail-perks">
@@ -354,7 +352,7 @@ export function RoomDetailPage() {
 
         <section className="hg-detail-foot">
           <h2 className="hg-serif-em">
-            Một kỳ nghỉ <em>đúng nghĩa.</em>
+            Một kỳ nghỉ <em>đúng nghĩa</em>
           </h2>
           <Link to="/rooms" className="hg-editorial-link">
             Khám phá thêm phòng <ArrowRight size={15} aria-hidden="true" />

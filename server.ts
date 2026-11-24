@@ -381,9 +381,13 @@ function buildApiRouter() {
     if (store.rooms.some((r) => r.roomNumber === roomNumber)) {
       throw new HttpError(409, `Room number ${roomNumber} already exists`)
     }
-    if (!store.roomTypes.some((t) => t.id === roomTypeId)) {
+    const rt = store.roomTypes.find((t) => t.id === roomTypeId)
+    if (!rt) {
       throw new HttpError(404, `Room type not found with ID: ${roomTypeId}`)
     }
+    const imageUrls = Array.isArray(body.imageUrls)
+      ? body.imageUrls.map(String).map((s: string) => s.trim()).filter(Boolean)
+      : [...(rt.imageUrls || (rt.imageUrl ? [rt.imageUrl] : []))]
     const room = {
       id: store.allocateId('room'),
       roomNumber,
@@ -392,6 +396,7 @@ function buildApiRouter() {
       status: 'AVAILABLE' as RoomStatus,
       operational: true,
       serviceIds: Array.isArray(body.serviceIds) ? body.serviceIds.map(Number) : [],
+      imageUrls,
     }
     store.rooms.push(room)
     res.status(201).json(ok(store.toRoomResponse(room), 'Room created successfully'))
@@ -846,9 +851,13 @@ function buildApiRouter() {
     if (store.rooms.some((r) => r.roomNumber === roomNumber)) {
       throw new HttpError(409, `Room number ${roomNumber} already exists`)
     }
-    if (!store.roomTypes.some((t) => t.id === roomTypeId)) {
+    const rt = store.roomTypes.find((t) => t.id === roomTypeId)
+    if (!rt) {
       throw new HttpError(404, 'Room type not found')
     }
+    const imageUrls = Array.isArray(body.imageUrls)
+      ? body.imageUrls.map(String).map((s: string) => s.trim()).filter(Boolean)
+      : [...(rt.imageUrls || (rt.imageUrl ? [rt.imageUrl] : []))]
     const room = {
       id: store.allocateId('room'),
       roomNumber,
@@ -857,6 +866,7 @@ function buildApiRouter() {
       status: 'AVAILABLE' as RoomStatus,
       operational: true,
       serviceIds: Array.isArray(body.serviceIds) ? body.serviceIds.map(Number) : [],
+      imageUrls,
     }
     store.rooms.push(room)
     res.status(201).json(ok(store.toRoomResponse(room), 'Room created successfully'))
@@ -874,13 +884,20 @@ function buildApiRouter() {
     if (store.rooms.some((r) => r.roomNumber === roomNumber && r.id !== id)) {
       throw new HttpError(409, 'Room number is already in use')
     }
-    if (!store.roomTypes.some((t) => t.id === roomTypeId)) {
+    const rt = store.roomTypes.find((t) => t.id === roomTypeId)
+    if (!rt) {
       throw new HttpError(404, 'Room type not found')
     }
+    const typeChanged = room.roomTypeId !== roomTypeId
     room.roomNumber = roomNumber
     room.floor = Number.isInteger(floor) ? floor : room.floor
     room.roomTypeId = roomTypeId
     room.serviceIds = Array.isArray(body.serviceIds) ? body.serviceIds.map(Number) : []
+    if (Array.isArray(body.imageUrls)) {
+      room.imageUrls = body.imageUrls.map(String).map((s: string) => s.trim()).filter(Boolean)
+    } else if (typeChanged) {
+      room.imageUrls = [...(rt.imageUrls || (rt.imageUrl ? [rt.imageUrl] : []))]
+    }
     res.json(ok(store.toRoomResponse(room), 'Room updated successfully'))
   })
 
@@ -948,13 +965,19 @@ function buildApiRouter() {
     if (store.roomTypes.some((t) => t.name.toLowerCase() === name.toLowerCase())) {
       throw new HttpError(409, 'Room type name is already in use')
     }
+    const imageUrl = body.imageUrl ? String(body.imageUrl).trim() : null
+    const rawGallery = Array.isArray(body.imageUrls)
+      ? body.imageUrls.map(String).map((s: string) => s.trim()).filter(Boolean)
+      : []
+    const imageUrls = rawGallery.length ? rawGallery : imageUrl ? [imageUrl] : []
     const rt = {
       id: store.allocateId('roomType'),
       name,
       basePrice,
       capacity,
       description: body.description ? String(body.description) : null,
-      imageUrl: body.imageUrl ? String(body.imageUrl) : null,
+      imageUrl: imageUrls[0] ?? imageUrl,
+      imageUrls,
       areaSqm: body.areaSqm ? Number(body.areaSqm) : null,
       amenities: body.amenities ? String(body.amenities) : null,
     }
@@ -976,11 +999,18 @@ function buildApiRouter() {
     if (store.roomTypes.some((t) => t.id !== id && t.name.toLowerCase() === name.toLowerCase())) {
       throw new HttpError(409, 'Room type name is already in use')
     }
+    const nextImageUrl = body.imageUrl ? String(body.imageUrl).trim() : null
+    const nextGallery = Array.isArray(body.imageUrls)
+      ? body.imageUrls.map(String).map((s: string) => s.trim()).filter(Boolean)
+      : nextImageUrl
+        ? [nextImageUrl, ...rt.imageUrls.filter((u) => u !== nextImageUrl)].slice(0, 5)
+        : []
     rt.name = name
     rt.basePrice = basePrice
     rt.capacity = capacity
     rt.description = body.description ? String(body.description) : null
-    rt.imageUrl = body.imageUrl ? String(body.imageUrl) : null
+    rt.imageUrl = nextImageUrl ?? nextGallery[0] ?? null
+    rt.imageUrls = nextGallery
     rt.areaSqm = body.areaSqm ? Number(body.areaSqm) : null
     rt.amenities = body.amenities ? String(body.amenities) : null
     res.json(ok(rt, 'Room type updated successfully'))

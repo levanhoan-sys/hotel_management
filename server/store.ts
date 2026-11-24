@@ -1,5 +1,7 @@
 import bcrypt from 'bcryptjs'
 import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
 
 export type RoleName = 'ROLE_CUSTOMER' | 'ROLE_RECEPTIONIST' | 'ROLE_ADMIN'
 export type AccountStatus = 'ACTIVE' | 'LOCKED'
@@ -59,6 +61,7 @@ export interface RoomTypeEntity {
   capacity: number
   description: string | null
   imageUrl: string | null
+  imageUrls: string[]
   areaSqm: number | null
   amenities: string | null
 }
@@ -79,6 +82,7 @@ export interface RoomEntity {
   operational: boolean
   roomTypeId: number
   serviceIds: number[]
+  imageUrls: string[]
 }
 
 export interface RoomBlockEntity {
@@ -382,92 +386,135 @@ export class HotelStore {
       })
     }
 
-    // Room Types from data.sql
-    this.roomTypes = [
-      {
-        id: this.nextId('roomType'),
-        name: 'Standard Single',
-        basePrice: 650000,
-        capacity: 1,
-        description: 'Phòng gọn gàng cho khách đi công tác tại Hà Đông.',
-        imageUrl: 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=1200&q=85',
-        areaSqm: 22,
-        amenities: 'Wi-Fi tốc độ cao,Điều hòa,TV thông minh,Bàn làm việc,Phòng tắm riêng',
-      },
-      {
-        id: this.nextId('roomType'),
-        name: 'Standard Double',
-        basePrice: 890000,
-        capacity: 2,
-        description: 'Phòng giường đôi ấm áp cho hai khách.',
-        imageUrl: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=85',
-        areaSqm: 28,
-        amenities: 'Wi-Fi tốc độ cao,Điều hòa,TV thông minh,Ấm đun nước,Phòng tắm riêng',
-      },
-      {
-        id: this.nextId('roomType'),
-        name: 'Deluxe Suite',
-        basePrice: 1650000,
-        capacity: 4,
-        description: 'Không gian rộng với góc tiếp khách và tầm nhìn thành phố.',
-        imageUrl: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=85',
-        areaSqm: 45,
-        amenities: 'Wi-Fi tốc độ cao,Điều hòa,TV thông minh,Minibar,Góc tiếp khách,Bồn tắm',
-      },
-      {
-        id: this.nextId('roomType'),
-        name: 'Presidential VIP',
-        basePrice: 3900000,
-        capacity: 6,
-        description: 'Căn suite cao cấp dành cho kỳ nghỉ gia đình tại Hà Nội.',
-        imageUrl: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1200&q=85',
-        areaSqm: 85,
-        amenities: 'Wi-Fi tốc độ cao,Điều hòa,TV thông minh,Minibar,Phòng khách,Bồn tắm,Bàn ăn',
-      },
-    ]
+    // Room Types, Galleries, Service Items & Rooms loaded from data.sql
+    const sqlSeed = loadSeedFromDataSql()
+    if (sqlSeed) {
+      this.roomTypes = sqlSeed.roomTypes
+      this.serviceItems = sqlSeed.serviceItems
+      this.rooms = sqlSeed.rooms
+      this.seq.roomType = Math.max(1, ...this.roomTypes.map((t) => t.id)) + 1
+      this.seq.service = Math.max(1, ...this.serviceItems.map((s) => s.id)) + 1
+      this.seq.room = Math.max(1, ...this.rooms.map((r) => r.id)) + 1
+    } else {
+      const singleImages = [
+        'https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=1200&q=85',
+        'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=85',
+        'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=1200&q=85',
+        'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1200&q=85',
+        'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?auto=format&fit=crop&w=1200&q=85',
+      ]
+      const doubleImages = [
+        'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=85',
+        'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=1200&q=85',
+        'https://images.unsplash.com/photo-1631049552057-403cdb8f0658?auto=format&fit=crop&w=1200&q=85',
+        'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=1200&q=85',
+        'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=1200&q=85',
+      ]
+      const deluxeImages = [
+        'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=85',
+        'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=1200&q=85',
+        'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?auto=format&fit=crop&w=1200&q=85',
+        'https://images.unsplash.com/photo-1560185007-cde436f6a4d0?auto=format&fit=crop&w=1200&q=85',
+        'https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=1200&q=85',
+      ]
+      const vipImages = [
+        'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&w=1200&q=85',
+        'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=85',
+        'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=1200&q=85',
+        'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=85',
+        'https://images.unsplash.com/photo-1620626011761-996317b8d101?auto=format&fit=crop&w=1200&q=85',
+      ]
+      this.roomTypes = [
+        {
+          id: this.nextId('roomType'),
+          name: 'Standard Single',
+          basePrice: 650000,
+          capacity: 1,
+          description: 'Phòng gọn gàng cho khách đi công tác tại Hà Đông.',
+          imageUrl: singleImages[0],
+          imageUrls: singleImages,
+          areaSqm: 22,
+          amenities: 'Wi-Fi tốc độ cao,Điều hòa,TV thông minh,Bàn làm việc,Phòng tắm riêng',
+        },
+        {
+          id: this.nextId('roomType'),
+          name: 'Standard Double',
+          basePrice: 890000,
+          capacity: 2,
+          description: 'Phòng giường đôi ấm áp cho hai khách.',
+          imageUrl: doubleImages[0],
+          imageUrls: doubleImages,
+          areaSqm: 28,
+          amenities: 'Wi-Fi tốc độ cao,Điều hòa,TV thông minh,Ấm đun nước,Phòng tắm riêng',
+        },
+        {
+          id: this.nextId('roomType'),
+          name: 'Deluxe Suite',
+          basePrice: 1650000,
+          capacity: 4,
+          description: 'Không gian rộng với góc tiếp khách và tầm nhìn thành phố.',
+          imageUrl: deluxeImages[0],
+          imageUrls: deluxeImages,
+          areaSqm: 45,
+          amenities: 'Wi-Fi tốc độ cao,Điều hòa,TV thông minh,Minibar,Góc tiếp khách,Bồn tắm',
+        },
+        {
+          id: this.nextId('roomType'),
+          name: 'Presidential VIP',
+          basePrice: 3900000,
+          capacity: 6,
+          description: 'Căn suite cao cấp dành cho kỳ nghỉ gia đình tại Hà Nội.',
+          imageUrl: vipImages[0],
+          imageUrls: vipImages,
+          areaSqm: 85,
+          amenities: 'Wi-Fi tốc độ cao,Điều hòa,TV thông minh,Minibar,Phòng khách,Bồn tắm,Bàn ăn',
+        },
+      ]
 
-    // Service Items from data.sql
-    this.serviceItems = [
-      { id: this.nextId('service'), name: 'Bữa sáng tại phòng', unitPrice: 180000, unit: 'suất', active: true },
-      { id: this.nextId('service'), name: 'Giặt ủi', unitPrice: 70000, unit: 'kg', active: true },
-      { id: this.nextId('service'), name: 'Nước giải khát minibar', unitPrice: 45000, unit: 'lon', active: true },
-      { id: this.nextId('service'), name: 'Đưa đón sân bay', unitPrice: 450000, unit: 'chuyến', active: true },
-      { id: this.nextId('service'), name: 'Massage tại phòng', unitPrice: 850000, unit: 'giờ', active: true },
-      { id: this.nextId('service'), name: 'Gọi nhân viên hỗ trợ', unitPrice: 0, unit: 'lần', active: true },
-      { id: this.nextId('service'), name: 'Bữa trưa tại phòng', unitPrice: 220000, unit: 'suất', active: true },
-      { id: this.nextId('service'), name: 'Bữa tối tại phòng', unitPrice: 280000, unit: 'suất', active: true },
-    ]
+      this.serviceItems = [
+        { id: this.nextId('service'), name: 'Bữa sáng tại phòng', unitPrice: 180000, unit: 'suất', active: true },
+        { id: this.nextId('service'), name: 'Giặt ủi', unitPrice: 70000, unit: 'kg', active: true },
+        { id: this.nextId('service'), name: 'Nước giải khát minibar', unitPrice: 45000, unit: 'lon', active: true },
+        { id: this.nextId('service'), name: 'Đưa đón sân bay', unitPrice: 450000, unit: 'chuyến', active: true },
+        { id: this.nextId('service'), name: 'Massage tại phòng', unitPrice: 850000, unit: 'giờ', active: true },
+        { id: this.nextId('service'), name: 'Gọi nhân viên hỗ trợ', unitPrice: 0, unit: 'lần', active: true },
+        { id: this.nextId('service'), name: 'Bữa trưa tại phòng', unitPrice: 220000, unit: 'suất', active: true },
+        { id: this.nextId('service'), name: 'Bữa tối tại phòng', unitPrice: 280000, unit: 'suất', active: true },
+      ]
 
-    const baseServices = [1, 2, 3, 6, 7, 8]
-    const vipServices = [1, 2, 3, 4, 5, 6, 7, 8]
-    const vipRooms = new Set([5, 6, 9, 10, 11, 12])
+      const baseServices = [1, 2, 3, 6, 7, 8]
+      const vipServices = [1, 2, 3, 4, 5, 6, 7, 8]
+      const vipRooms = new Set([5, 6, 9, 10, 11, 12])
 
-    const roomSeeds: Array<[string, number, number, RoomStatus]> = [
-      ['101', 1, 1, 'AVAILABLE'],
-      ['102', 1, 1, 'AVAILABLE'],
-      ['201', 2, 2, 'OCCUPIED'],
-      ['202', 2, 2, 'AVAILABLE'],
-      ['301', 3, 3, 'AVAILABLE'],
-      ['401', 4, 4, 'AVAILABLE'],
-      ['103', 1, 2, 'AVAILABLE'],
-      ['203', 2, 2, 'AVAILABLE'],
-      ['302', 3, 3, 'AVAILABLE'],
-      ['402', 4, 4, 'AVAILABLE'],
-      ['501', 5, 3, 'AVAILABLE'],
-      ['601', 6, 4, 'AVAILABLE'],
-    ]
+      const roomSeeds: Array<[string, number, number, RoomStatus]> = [
+        ['101', 1, 1, 'AVAILABLE'],
+        ['102', 1, 1, 'AVAILABLE'],
+        ['201', 2, 2, 'OCCUPIED'],
+        ['202', 2, 2, 'AVAILABLE'],
+        ['301', 3, 3, 'AVAILABLE'],
+        ['401', 4, 4, 'AVAILABLE'],
+        ['103', 1, 2, 'AVAILABLE'],
+        ['203', 2, 2, 'AVAILABLE'],
+        ['302', 3, 3, 'AVAILABLE'],
+        ['402', 4, 4, 'AVAILABLE'],
+        ['501', 5, 3, 'AVAILABLE'],
+        ['601', 6, 4, 'AVAILABLE'],
+      ]
 
-    for (const [roomNumber, floor, roomTypeId, status] of roomSeeds) {
-      const id = this.nextId('room')
-      this.rooms.push({
-        id,
-        roomNumber,
-        floor,
-        roomTypeId,
-        status,
-        operational: true,
-        serviceIds: vipRooms.has(id) ? [...vipServices] : [...baseServices],
-      })
+      for (const [roomNumber, floor, roomTypeId, status] of roomSeeds) {
+        const id = this.nextId('room')
+        const rt = this.roomTypes.find((t) => t.id === roomTypeId)
+        this.rooms.push({
+          id,
+          roomNumber,
+          floor,
+          roomTypeId,
+          status,
+          operational: true,
+          serviceIds: vipRooms.has(id) ? [...vipServices] : [...baseServices],
+          imageUrls: rt ? [...rt.imageUrls] : [],
+        })
+      }
     }
 
     // Bookings from data-dev.sql
@@ -721,6 +768,13 @@ export class HotelStore {
       .map((id) => this.serviceItems.find((s) => s.id === id))
       .filter((s): s is ServiceItemEntity => Boolean(s && s.active))
       .map((s) => ({ ...s }))
+    const imageUrls = room.imageUrls?.length
+      ? [...room.imageUrls]
+      : rt?.imageUrls?.length
+        ? [...rt.imageUrls]
+        : rt?.imageUrl
+          ? [rt.imageUrl]
+          : []
     return {
       id: room.id,
       roomNumber: room.roomNumber,
@@ -731,7 +785,8 @@ export class HotelStore {
       basePrice: rt?.basePrice ?? 0,
       capacity: rt?.capacity ?? 0,
       description: rt?.description ?? null,
-      imageUrl: rt?.imageUrl ?? null,
+      imageUrl: imageUrls[0] ?? rt?.imageUrl ?? null,
+      imageUrls,
       areaSqm: rt?.areaSqm ?? null,
       amenities: rt?.amenities ?? null,
       services,
@@ -1353,3 +1408,184 @@ export class HotelStore {
     return this.nextId(key)
   }
 }
+
+type SqlValue = string | number | boolean | null
+
+function parseSqlValues(valuesClause: string): SqlValue[][] {
+  const rows: SqlValue[][] = []
+  let i = 0
+  const len = valuesClause.length
+
+  const skipWhitespace = () => {
+    while (i < len && /\s/.test(valuesClause[i])) i++
+  }
+
+  while (i < len) {
+    skipWhitespace()
+    if (i >= len || valuesClause[i] !== '(') {
+      i++
+      continue
+    }
+    i++ // skip '('
+    const row: SqlValue[] = []
+    while (i < len) {
+      skipWhitespace()
+      if (valuesClause[i] === ')') {
+        i++
+        break
+      }
+      if (valuesClause[i] === "'") {
+        i++
+        let str = ''
+        while (i < len) {
+          if (valuesClause[i] === "'" && valuesClause[i + 1] === "'") {
+            str += "'"
+            i += 2
+          } else if (valuesClause[i] === "'") {
+            i++
+            break
+          } else {
+            str += valuesClause[i++]
+          }
+        }
+        row.push(str)
+      } else {
+        let token = ''
+        while (i < len && valuesClause[i] !== ',' && valuesClause[i] !== ')') {
+          token += valuesClause[i++]
+        }
+        const trimmed = token.trim()
+        const upper = trimmed.toUpperCase()
+        if (upper === 'NULL') row.push(null)
+        else if (upper === 'TRUE') row.push(true)
+        else if (upper === 'FALSE') row.push(false)
+        else if (trimmed !== '' && !Number.isNaN(Number(trimmed))) row.push(Number(trimmed))
+        else row.push(trimmed)
+      }
+      skipWhitespace()
+      if (valuesClause[i] === ',') i++
+    }
+    rows.push(row)
+    skipWhitespace()
+    if (valuesClause[i] === ',') i++
+  }
+  return rows
+}
+
+function extractInsertRows(sql: string, tableName: string): SqlValue[][] {
+  const regex = new RegExp(
+    `INSERT\\s+INTO\\s+${tableName}\\s*\\([^)]*\\)\\s*VALUES\\s*([\\s\\S]*?);`,
+    'gi',
+  )
+  const rows: SqlValue[][] = []
+  let match: RegExpExecArray | null
+  while ((match = regex.exec(sql)) !== null) {
+    rows.push(...parseSqlValues(match[1]))
+  }
+  return rows
+}
+
+function loadSeedFromDataSql(): {
+  roomTypes: RoomTypeEntity[]
+  serviceItems: ServiceItemEntity[]
+  rooms: RoomEntity[]
+} | null {
+  try {
+    const filePath = path.resolve(process.cwd(), 'data.sql')
+    if (!fs.existsSync(filePath)) return null
+    const rawSql = fs.readFileSync(filePath, 'utf8')
+    const cleanedSql = rawSql.replace(/^\s*--[^\r\n]*/gm, '')
+
+    const rtRows = extractInsertRows(cleanedSql, 'room_types')
+    const rtImgRows = extractInsertRows(cleanedSql, 'room_type_images')
+    const svcRows = extractInsertRows(cleanedSql, 'service_items')
+    const roomRows = extractInsertRows(cleanedSql, 'rooms')
+    const roomImgRows = extractInsertRows(cleanedSql, 'room_images')
+    const roomSvcRows = extractInsertRows(cleanedSql, 'room_services')
+
+    if (!rtRows.length || !roomRows.length) return null
+
+    const rtImagesMap = new Map<number, Array<{ order: number; url: string }>>()
+    for (const row of rtImgRows) {
+      const roomTypeId = Number(row[1])
+      const url = String(row[2] || '')
+      const order = Number(row[4] ?? 1)
+      if (!url) continue
+      const list = rtImagesMap.get(roomTypeId) ?? []
+      list.push({ order, url })
+      rtImagesMap.set(roomTypeId, list)
+    }
+
+    const roomTypes: RoomTypeEntity[] = rtRows.map((row) => {
+      const id = Number(row[0])
+      const primary = row[5] ? String(row[5]) : null
+      const gallery = (rtImagesMap.get(id) ?? [])
+        .sort((a, b) => a.order - b.order)
+        .map((item) => item.url)
+      const imageUrls = gallery.length ? gallery : primary ? [primary] : []
+      return {
+        id,
+        name: String(row[1]),
+        basePrice: Number(row[2]),
+        capacity: Number(row[3]),
+        description: row[4] ? String(row[4]) : null,
+        imageUrl: imageUrls[0] ?? primary,
+        imageUrls,
+        areaSqm: row[6] !== null && row[6] !== undefined ? Number(row[6]) : null,
+        amenities: row[7] ? String(row[7]) : null,
+      }
+    })
+
+    const serviceItems: ServiceItemEntity[] = svcRows.map((row) => ({
+      id: Number(row[0]),
+      name: String(row[1]),
+      unitPrice: Number(row[2]),
+      unit: String(row[3]),
+      active: Boolean(row[4]),
+    }))
+
+    const roomImagesMap = new Map<number, Array<{ order: number; url: string }>>()
+    for (const row of roomImgRows) {
+      const roomId = Number(row[1])
+      const url = String(row[2] || '')
+      const order = Number(row[4] ?? 1)
+      if (!url) continue
+      const list = roomImagesMap.get(roomId) ?? []
+      list.push({ order, url })
+      roomImagesMap.set(roomId, list)
+    }
+
+    const roomServicesMap = new Map<number, number[]>()
+    for (const row of roomSvcRows) {
+      const roomId = Number(row[0])
+      const serviceId = Number(row[1])
+      const list = roomServicesMap.get(roomId) ?? []
+      list.push(serviceId)
+      roomServicesMap.set(roomId, list)
+    }
+
+    const rooms: RoomEntity[] = roomRows.map((row) => {
+      const id = Number(row[0])
+      const roomTypeId = Number(row[3])
+      const rt = roomTypes.find((t) => t.id === roomTypeId)
+      const gallery = (roomImagesMap.get(id) ?? [])
+        .sort((a, b) => a.order - b.order)
+        .map((item) => item.url)
+      return {
+        id,
+        roomNumber: String(row[1]),
+        floor: Number(row[2]),
+        roomTypeId,
+        status: String(row[4] || 'AVAILABLE') as RoomStatus,
+        operational: Boolean(row[5]),
+        serviceIds: roomServicesMap.get(id) ?? [],
+        imageUrls: gallery.length ? gallery : rt ? [...rt.imageUrls] : [],
+      }
+    })
+
+    return { roomTypes, serviceItems, rooms }
+  } catch {
+    return null
+  }
+}
+

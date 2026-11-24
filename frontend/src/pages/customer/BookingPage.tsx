@@ -7,6 +7,7 @@ import { api, errorMessage, request } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import type { ApiResponse, Booking, Room } from '../../lib/types'
 import { calculateNights, uniqueRoomIds, validStay } from '../../lib/booking-utils'
+import { HgSelect } from '../../components/HgSelect'
 import { EmptyState, ErrorState, LoadingSkeleton } from '../../components/shared'
 import { dateInput, fmtDate, money, RoomImage, RoomRecommendationSection } from './customer-helpers'
 
@@ -179,19 +180,19 @@ export function BookingPage() {
                           <p>
                             <Users size={14} aria-hidden="true" /> Tối đa {r.capacity} khách · Tầng {r.floor}
                           </p>
-                          <label className="hg-guest-select-inline">
+                          <div className="hg-guest-select-inline">
                             <span>Số khách</span>
-                            <select
-                              value={selectedGuests}
-                              onChange={(e) => setCounts((c) => ({ ...c, [r.id]: Number(e.target.value) }))}
-                            >
-                              {Array.from({ length: r.capacity }, (_, i) => i + 1).map((n) => (
-                                <option key={n} value={n}>
-                                  {n} khách
-                                </option>
-                              ))}
-                            </select>
-                          </label>
+                            <HgSelect
+                              variant="inline"
+                              ariaLabel={`Số khách phòng ${r.roomNumber}`}
+                              value={String(selectedGuests)}
+                              onChange={(value) => setCounts((c) => ({ ...c, [r.id]: Number(value) }))}
+                              options={Array.from({ length: r.capacity }, (_, i) => i + 1).map((n) => ({
+                                value: String(n),
+                                label: `${n} khách`,
+                              }))}
+                            />
+                          </div>
                         </div>
 
                         <div className="hg-selected-room-right">

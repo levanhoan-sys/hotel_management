@@ -4,6 +4,7 @@ import { ArrowRight, Check, ConciergeBell, Minus, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { api, errorMessage, request } from '../../lib/api'
 import type { ApiResponse, Booking, Room } from '../../lib/types'
+import { HgSelect } from '../../components/HgSelect'
 import { EmptyState, ErrorState, LoadingSkeleton, StatusBadge } from '../../components/shared'
 import { money } from './customer-helpers'
 
@@ -114,25 +115,22 @@ export function RoomServiceOrder({ booking }: { booking: Booking }) {
       ) : (
         <div className="hg-service-composer">
           <div className="hg-service-room-select-row">
-            <label className="hg-field hg-service-room-field">
+            <div className="hg-field hg-service-room-field">
               <span>Phòng áp dụng</span>
-              <div className="hg-input-wrap">
-                <select
-                  aria-label="Chọn phòng áp dụng dịch vụ"
-                  value={roomId}
-                  onChange={(e) => {
-                    setRoomId(Number(e.target.value))
-                    setServiceId(0)
-                  }}
-                >
-                  {booking.rooms.map((room) => (
-                    <option key={room.roomId} value={room.roomId}>
-                      Phòng {room.roomNumber}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </label>
+              <HgSelect
+                variant="field"
+                ariaLabel="Chọn phòng áp dụng dịch vụ"
+                value={String(roomId)}
+                onChange={(value) => {
+                  setRoomId(Number(value))
+                  setServiceId(0)
+                }}
+                options={booking.rooms.map((room) => ({
+                  value: String(room.roomId),
+                  label: `Phòng ${room.roomNumber}`,
+                }))}
+              />
+            </div>
           </div>
 
           {!services.length ? (

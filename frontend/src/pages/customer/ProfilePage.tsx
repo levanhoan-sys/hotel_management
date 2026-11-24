@@ -4,12 +4,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { ArrowRight, Check, CircleAlert, Eye, EyeOff, KeyRound, ShieldCheck, UserRound } from 'lucide-react'
+import { ArrowRight, Check, ChevronRight, CircleAlert, Eye, EyeOff, KeyRound, ShieldCheck, UserRound } from 'lucide-react'
 import { toast } from 'sonner'
 import { api, errorMessage, request } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import type { ApiResponse, Profile } from '../../lib/types'
-import { LoadingSkeleton, PageHeader, StatusBadge } from '../../components/shared'
+import { LoadingSkeleton, StatusBadge } from '../../components/shared'
 
 const profileSchema = z.object({
   fullName: z.string().min(1, 'Vui lòng nhập họ tên'),
@@ -85,18 +85,35 @@ export function ProfilePage() {
 
   return (
     <main className="hg-account-page hg-profile-page">
-      <div className="hg-container">
-        <PageHeader
-          kicker="TÀI KHOẢN HOÀNG GIA HOTEL"
-          title="Thông tin cá nhân."
-          detail="Quản lý thông tin liên hệ và bảo mật tài khoản của bạn."
-          action={
+      <section className="hg-page-banner hg-account-banner">
+        <div className="hg-container hg-account-banner-inner">
+          <div className="hg-account-banner-copy">
+            <div className="hg-breadcrumb">
+              <Link to="/">Trang chủ</Link>
+              <ChevronRight size={14} aria-hidden="true" />
+              <span>Thông tin cá nhân</span>
+            </div>
+            <span className="hg-kicker">TÀI KHOẢN HOÀNG GIA HOTEL</span>
+            <h1 className="hg-serif-em">
+              Thông tin <em>cá nhân</em>
+            </h1>
+            <p>Quản lý thông tin liên hệ và bảo mật tài khoản của bạn.</p>
+          </div>
+          <div className="hg-account-banner-actions">
+            <nav className="hg-account-switch" aria-label="Điều hướng tài khoản">
+              <Link to="/my-bookings">Đơn đặt phòng</Link>
+              <Link to="/profile" className="is-active" aria-current="page">
+                Thông tin cá nhân
+              </Link>
+            </nav>
             <Link className="hg-btn hg-btn-outline" to="/my-bookings">
               Lịch sử đặt phòng <ArrowRight size={15} aria-hidden="true" />
             </Link>
-          }
-        />
+          </div>
+        </div>
+      </section>
 
+      <div className="hg-container hg-account-body">
         {loading ? (
           <LoadingSkeleton variant="cards" count={2} />
         ) : (
@@ -109,7 +126,7 @@ export function ProfilePage() {
                 <h2>{displayName}</h2>
                 <div className="hg-profile-meta-line">
                   {displayUsername && <span className="hg-mono">@{displayUsername}</span>}
-                  <span aria-hidden="true">·</span>
+                  {displayUsername && <span className="hg-meta-sep" aria-hidden="true" />}
                   <span>{displayRole}</span>
                 </div>
               </div>

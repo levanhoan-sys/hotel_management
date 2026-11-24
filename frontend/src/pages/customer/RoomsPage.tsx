@@ -1,13 +1,72 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, BedDouble, Check, ChevronRight, CircleAlert, MapPin, Plus, Search, ShieldCheck, Users } from 'lucide-react'
+import { ArrowRight, BedDouble, Check, ChevronLeft, ChevronRight, CircleAlert, MapPin, Plus, Search, ShieldCheck, Users } from 'lucide-react'
 import { api, request } from '../../lib/api'
 import type { ApiResponse, Room, RoomType } from '../../lib/types'
 import { uniqueRoomIds } from '../../lib/booking-utils'
 import { MoneyInput } from '../../components/MoneyInput'
+import { HgSelect } from '../../components/HgSelect'
 import { EmptyState, ErrorState, LoadingSkeleton, StatusBadge } from '../../components/shared'
-import { DateSearch, fmtDate, money, roomDescription, RoomImage, RoomRecommendationSection } from './customer-helpers'
+import { DateSearch, fmtDate, getRoomImages, money, roomDescription, RoomImage, RoomRecommendationSection } from './customer-helpers'
+
+function RoomCardThumb({ room, isReady }: { room: Room; isReady: boolean }) {
+  const images = getRoomImages(room)
+  const [index, setIndex] = useState(0)
+  const safeIndex = images.length ? index % images.length : 0
+
+  return (
+    <div className="hg-room-card-thumb">
+      <Link className="hg-room-card-thumb-link" to={`/rooms/${room.id}`}>
+        {images.length > 0 ? (
+          <div className="hg-room-media">
+            <img
+              src={images[safeIndex]}
+              alt={`${room.roomTypeName || `Phòng ${room.roomNumber}`} - Ảnh ${safeIndex + 1}`}
+              loading="lazy"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+        ) : (
+          <RoomImage room={room} />
+        )}
+      </Link>
+
+      <div className="hg-room-card-status">
+        <StatusBadge
+          tone={isReady ? 'green' : 'amber'}
+          label={isReady ? 'Sẵn sàng đón bạn' : 'Cần kiểm tra tình trạng'}
+        />
+      </div>
+
+      {images.length > 1 && (
+        <>
+          <button
+            type="button"
+            className="hg-card-gallery-btn is-prev"
+            aria-label={`Ảnh trước phòng ${room.roomNumber}`}
+            onClick={() => setIndex((prev) => (prev - 1 + images.length) % images.length)}
+          >
+            <ChevronLeft size={15} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="hg-card-gallery-btn is-next"
+            aria-label={`Ảnh tiếp theo phòng ${room.roomNumber}`}
+            onClick={() => setIndex((prev) => (prev + 1) % images.length)}
+          >
+            <ChevronRight size={15} aria-hidden="true" />
+          </button>
+          <div className="hg-card-gallery-bars" aria-hidden="true">
+            {images.map((url, idx) => (
+              <span key={url} className={idx === safeIndex ? 'is-active' : ''} />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
 
 export function RoomsPage() {
   const [params, setParams] = useSearchParams()
@@ -127,7 +186,7 @@ export function RoomsPage() {
           </div>
           <span className="hg-kicker">PHÒNG NGHỈ HOÀNG GIA HOTEL</span>
           <h1 className="hg-serif-em">
-            Hạng phòng <em>tại Hoàng Gia.</em>
+            Hạng phòng <em>tại Hoàng Gia</em>
           </h1>
           <p>Chọn không gian phù hợp cho kỳ nghỉ của bạn.</p>
         </div>
@@ -150,17 +209,20 @@ export function RoomsPage() {
               <b>{visibleRooms.length}</b>
               <span>phòng phù hợp với lựa chọn hiện tại</span>
             </div>
-            <label className="hg-sort-control">
+            <div className="hg-sort-control">
               <span>Sắp xếp</span>
-              <select
-                aria-label="Sắp xếp giá phòng"
+              <HgSelect
+                variant="filter"
+                align="right"
+                ariaLabel="Sắp xếp giá phòng"
                 value={sort}
-                onChange={(e) => setFilter('sort', e.target.value)}
-              >
-                <option value="price-asc">Giá thấp đến cao</option>
-                <option value="price-desc">Giá cao đến thấp</option>
-              </select>
-            </label>
+                onChange={(value) => setFilter('sort', value)}
+                options={[
+                  { value: 'price-asc', label: 'Giá thấp đến cao' },
+                  { value: 'price-desc', label: 'Giá cao đến thấp' },
+                ]}
+              />
+            </div>
           </div>
 
           <div className="hg-filter-grid">
@@ -174,19 +236,20 @@ export function RoomsPage() {
               />
             </label>
 
-            <select
-              className="hg-filter-select"
-              aria-label="Lọc theo hạng phòng"
+            <HgSelect
+              variant="filter"
+              ariaLabel="Lọc theo hạng phòng"
               value={draftType}
-              onChange={(e) => setDraftType(e.target.value)}
-            >
-              <option value="">Tất cả hạng phòng</option>
-              {types.data?.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
+              onChange={setDraftType}
+              options={[
+                { value: '', label: 'Tất cả hạng phòng' },
+                ...(types.data?.map((t) => ({
+                  value: String(t.id),
+                  label: t.name,
+                  hint: `Tối đa ${t.capacity} khách`,
+                })) || []),
+              ]}
+            />
 
             <label className="hg-filter-input-box">
               <span>Từ</span>
@@ -263,21 +326,13 @@ export function RoomsPage() {
               const isSelected = selectedIds.includes(room.id)
               return (
                 <article className="hg-room-card" key={room.id}>
-                  <Link className="hg-room-card-thumb" to={`/rooms/${room.id}`}>
-                    <RoomImage room={room} />
-                    <div className="hg-room-card-status">
-                      <StatusBadge
-                        tone={isReady ? 'green' : 'amber'}
-                        label={isReady ? 'Sẵn sàng đón bạn' : 'Cần kiểm tra tình trạng'}
-                      />
-                    </div>
-                  </Link>
+                  <RoomCardThumb room={room} isReady={isReady} />
 
                   <div className="hg-room-card-body">
                     <div className="hg-room-card-top">
                       <div>
-                        <span className="hg-kicker">
-                          {room.roomTypeName} · PHÒNG {room.roomNumber}
+                        <span className="hg-kicker hg-room-code">
+                          Phòng {room.roomNumber}
                         </span>
                         <h2>
                           <Link to={`/rooms/${room.id}`}>{room.roomTypeName}</Link>

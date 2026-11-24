@@ -141,8 +141,8 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
           <div className="hg-auth-brand">
             <img src="/logo-crown-transparent.png" alt="" aria-hidden="true" />
             <div>
-              <span className="hg-kicker">HOÀNG GIA HOTEL · HÀ ĐÔNG</span>
-              <small>BOUTIQUE LUXURY STAY</small>
+              <span className="hg-auth-brand-title">Hoàng Gia Hotel</span>
+              <small>HÀ ĐÔNG, HÀ NỘI</small>
             </div>
           </div>
 

@@ -81,14 +81,14 @@ export function HomePage() {
             <h2 className="hg-serif-em">
               Chậm lại một nhịp,
               <br />
-              để thấy <em>điều đẹp đẽ.</em>
+              để thấy <em>điều đẹp đẽ</em>
             </h2>
             <div className="hg-story-copy">
               <p className="hg-story-lead">
                 Một nơi để trở về sau những ngày dài. Một khoảng riêng tư để bạn nghỉ ngơi theo cách của mình.
               </p>
               <p>
-                HOÀNG GIA chăm chút trải nghiệm lưu trú bằng sự giản dị, ấm áp và những lựa chọn rõ ràng ngay từ lúc
+                Hoàng Gia chăm chút trải nghiệm lưu trú bằng sự giản dị, ấm áp và những lựa chọn rõ ràng ngay từ lúc
                 đặt phòng.
               </p>
               <Link to="/rooms" className="hg-editorial-link">
@@ -115,7 +115,7 @@ export function HomePage() {
             <div>
               <span className="hg-kicker">KHÔNG GIAN LƯU TRÚ</span>
               <h2 className="hg-serif-em">
-                Khám phá <em>hạng phòng.</em>
+                Khám phá <em>hạng phòng</em>
               </h2>
               <p>Chọn không gian phù hợp cho kỳ nghỉ của bạn.</p>
             </div>
@@ -140,23 +140,27 @@ export function HomePage() {
                     </span>
                   </div>
                   <div className="hg-type-body">
-                    <div className="hg-type-head">
-                      <div>
-                        <span className="hg-kicker">
-                          TỐI ĐA {type.capacity} KHÁCH{type.areaSqm ? ` · ${type.areaSqm} M²` : ''}
-                        </span>
-                        <h3>{type.name}</h3>
-                      </div>
+                    <div className="hg-type-specs">
+                      <span>Tối đa {type.capacity} khách</span>
+                      {type.areaSqm ? (
+                        <>
+                          <span className="hg-type-sep" aria-hidden="true" />
+                          <span>{type.areaSqm} m²</span>
+                        </>
+                      ) : null}
+                    </div>
+                    <h3 className="hg-type-title">{type.name}</h3>
+                    <p className="hg-type-desc">{roomDescription(type.description)}</p>
+                    <div className="hg-type-foot">
                       <div className="hg-type-price">
                         <span>Từ</span>
                         <b>{money(type.basePrice)}</b>
                         <small>/ đêm</small>
                       </div>
+                      <span className="hg-type-cta">
+                        Xem chi tiết <ArrowRight size={15} aria-hidden="true" />
+                      </span>
                     </div>
-                    <p>{roomDescription(type.description)}</p>
-                    <span className="hg-type-foot">
-                      Xem chi tiết <ArrowRight size={15} aria-hidden="true" />
-                    </span>
                   </div>
                 </Link>
               ))}
@@ -173,14 +177,14 @@ export function HomePage() {
       <section className="hg-experience" id="experience">
         <div className="hg-experience-media">
           <div className="hg-experience-photo" />
-          <span className="hg-photo-tag">Ảnh minh họa · Không gian lưu trú</span>
+          <span className="hg-photo-tag">Không gian lưu trú</span>
         </div>
         <div className="hg-experience-body">
           <span className="hg-kicker">TRẢI NGHIỆM TẠI HOÀNG GIA HOTEL</span>
           <h2 className="hg-serif-em">
             Mọi thứ bắt đầu
             <br />
-            từ cảm giác <em>thoải mái.</em>
+            từ cảm giác <em>thoải mái</em>
           </h2>
           <p>
             Khám phá những dịch vụ hiện đang được khách sạn cung cấp để kỳ nghỉ của bạn thêm trọn vẹn.

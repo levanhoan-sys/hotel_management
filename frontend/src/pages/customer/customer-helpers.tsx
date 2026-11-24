@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, BedDouble, CalendarDays, ChevronDown, Users } from 'lucide-react'
+import { ArrowRight, BedDouble, CalendarDays, ChevronLeft, ChevronRight, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { api, request } from '../../lib/api'
 import type { ApiResponse, RoomRecommendation, RoomType } from '../../lib/types'
+import { HgSelect } from '../../components/HgSelect'
 import { EmptyState, ErrorState, LoadingSkeleton, StatusBadge } from '../../components/shared'
 
 export const dateInput = (date: Date) =>
@@ -82,32 +83,97 @@ export function roomDescription(description?: string | null) {
   )
 }
 
+export function getRoomImages(room: { imageUrl: string | null; imageUrls?: string[] }) {
+  const list = (room.imageUrls || []).filter(Boolean)
+  if (list.length > 0) return list
+  return room.imageUrl ? [room.imageUrl] : []
+}
+
 export function RoomImage({
   room,
 }: {
-  room: { imageUrl: string | null; roomTypeName?: string; name?: string }
+  room: { imageUrl: string | null; imageUrls?: string[]; roomTypeName?: string; name?: string }
   large?: boolean
 }) {
-  const src = room.imageUrl
-  const illustrative = Boolean(src && /images\.unsplash\.com/.test(src))
+  const src = getRoomImages(room)[0] ?? null
 
   return (
     <div className="hg-room-media">
       {src ? (
-        <>
-          <img
-            src={src}
-            alt={`${illustrative ? 'Ảnh minh họa: ' : ''}${room.roomTypeName || room.name || 'phòng nghỉ'}`}
-            loading="lazy"
-          />
-          {illustrative && <span className="hg-photo-tag">Ảnh minh họa</span>}
-        </>
+        <img
+          src={src}
+          alt={room.roomTypeName || room.name || 'Phòng nghỉ Hoàng Gia'}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+        />
       ) : (
         <div className="hg-room-fallback">
           <span>HOÀNG GIA</span>
           <small>Hình ảnh phòng đang cập nhật</small>
         </div>
       )}
+    </div>
+  )
+}
+
+export function RoomGallery({
+  room,
+}: {
+  room: { imageUrl: string | null; imageUrls?: string[]; roomTypeName?: string; roomNumber?: string; name?: string }
+}) {
+  const images = getRoomImages(room)
+  const [activeIndex, setActiveIndex] = useState(0)
+
+  if (images.length <= 1) {
+    return (
+      <div className="hg-detail-hero-media">
+        <RoomImage room={room} large />
+      </div>
+    )
+  }
+
+  const safeIndex = activeIndex % images.length
+  const label = room.roomTypeName || room.name || 'Phòng nghỉ Hoàng Gia'
+  const goPrev = () => setActiveIndex((prev) => (prev - 1 + images.length) % images.length)
+  const goNext = () => setActiveIndex((prev) => (prev + 1) % images.length)
+
+  return (
+    <div className="hg-detail-gallery">
+      <div className="hg-detail-hero-media">
+        <div className="hg-room-media">
+          <img
+            key={images[safeIndex]}
+            src={images[safeIndex]}
+            alt={`${label} - Ảnh ${safeIndex + 1}`}
+            referrerPolicy="no-referrer"
+          />
+        </div>
+        <button type="button" className="hg-gallery-nav is-prev" aria-label="Ảnh trước" onClick={goPrev}>
+          <ChevronLeft size={18} aria-hidden="true" />
+        </button>
+        <button type="button" className="hg-gallery-nav is-next" aria-label="Ảnh tiếp theo" onClick={goNext}>
+          <ChevronRight size={18} aria-hidden="true" />
+        </button>
+        <span className="hg-gallery-counter" aria-live="polite">
+          {safeIndex + 1} / {images.length}
+        </span>
+      </div>
+
+      <div className="hg-detail-thumbs" role="tablist" aria-label={`Bộ sưu tập ảnh ${label}`}>
+        {images.map((url, idx) => (
+          <button
+            key={url}
+            type="button"
+            role="tab"
+            aria-selected={idx === safeIndex}
+            aria-label={`Xem ảnh ${idx + 1}`}
+            className={`hg-detail-thumb ${idx === safeIndex ? 'is-active' : ''}`.trim()}
+            onClick={() => setActiveIndex(idx)}
+          >
+            <img src={url} alt={`${label} - Thu nhỏ ${idx + 1}`} loading="lazy" referrerPolicy="no-referrer" />
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -205,33 +271,40 @@ export function DateSearch({
         />
       </label>
 
-      <label className="hg-search-cell">
+      <div className="hg-search-cell hg-search-cell--select">
         <span>SỐ KHÁCH</span>
         <Users size={16} aria-hidden="true" />
-        <select aria-label="Số khách" value={guests} onChange={(e) => setGuests(e.target.value)}>
-          {[1, 2, 3, 4, 5, 6].map((n) => (
-            <option key={n} value={n}>
-              {n} khách
-            </option>
-          ))}
-        </select>
-        <ChevronDown size={14} className="hg-select-caret" aria-hidden="true" />
-      </label>
+        <HgSelect
+          variant="search-cell"
+          ariaLabel="Số khách"
+          value={guests}
+          onChange={setGuests}
+          options={[1, 2, 3, 4, 5, 6].map((n) => ({
+            value: String(n),
+            label: `${n} khách`,
+          }))}
+        />
+      </div>
 
       {showRoomType && (
-        <label className="hg-search-cell">
+        <div className="hg-search-cell hg-search-cell--select">
           <span>HẠNG PHÒNG</span>
           <BedDouble size={16} aria-hidden="true" />
-          <select aria-label="Hạng phòng" value={typeId} onChange={(e) => setTypeId(e.target.value)}>
-            <option value="">Tất cả hạng phòng</option>
-            {types.data?.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-          <ChevronDown size={14} className="hg-select-caret" aria-hidden="true" />
-        </label>
+          <HgSelect
+            variant="search-cell"
+            ariaLabel="Hạng phòng"
+            value={typeId}
+            onChange={setTypeId}
+            options={[
+              { value: '', label: 'Tất cả hạng phòng' },
+              ...(types.data?.map((t) => ({
+                value: String(t.id),
+                label: t.name,
+                hint: `Tối đa ${t.capacity} khách`,
+              })) || []),
+            ]}
+          />
+        </div>
       )}
 
       <button type="button" className="hg-btn hg-btn-gold hg-search-submit" onClick={submit}>
@@ -318,8 +391,8 @@ export function RoomRecommendationSection({
               <div className="hg-rec-body">
                 <div className="hg-room-card-top">
                   <div>
-                    <span className="hg-kicker">
-                      {item.room.roomTypeName} · PHÒNG {item.room.roomNumber}
+                    <span className="hg-kicker hg-room-code">
+                      Phòng {item.room.roomNumber}
                     </span>
                     <h2>
                       <Link to={`/rooms/${item.room.id}${suffix}`}>{item.room.roomTypeName}</Link>
@@ -332,15 +405,16 @@ export function RoomRecommendationSection({
                   </div>
                 </div>
                 <div className="hg-rec-bottom">
-                  <div>
-                    <b>{money(item.room.basePrice)}</b>
-                    <span>
-                      {' '}
-                      / đêm ·{' '}
+                  <div className="hg-rec-price">
+                    <div className="hg-price-display hg-price-display--sm">
+                      <b>{money(item.room.basePrice)}</b>
+                      <span>/ đêm</span>
+                    </div>
+                    <small className="hg-rec-diff">
                       {item.priceDifference === 0
-                        ? 'cùng giá'
+                        ? 'Cùng mức giá'
                         : `${item.priceDifference > 0 ? '+' : '−'}${money(Math.abs(item.priceDifference))}`}
-                    </span>
+                    </small>
                   </div>
                   <Link className="hg-btn hg-btn-outline" to={`/rooms/${item.room.id}${suffix}`}>
                     Xem phòng <ArrowRight size={15} aria-hidden="true" />

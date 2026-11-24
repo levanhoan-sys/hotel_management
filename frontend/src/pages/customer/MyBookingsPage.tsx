@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowRight, BedDouble, CalendarDays, Search, X } from 'lucide-react'
+import { ArrowRight, BedDouble, CalendarDays, ChevronRight, Search, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { api, errorMessage, request } from '../../lib/api'
 import type { ApiResponse, Booking } from '../../lib/types'
-import { ConfirmDialog, EmptyState, ErrorState, LoadingSkeleton, PageHeader, StatusBadge } from '../../components/shared'
+import { HgSelect } from '../../components/HgSelect'
+import { ConfirmDialog, EmptyState, ErrorState, LoadingSkeleton, StatusBadge } from '../../components/shared'
 import { bookingStatusLabel, bookingStatusTone, fmtDate, money } from './customer-helpers'
 
 type CancellationPreview = {
@@ -22,6 +23,20 @@ const STATUS_TABS = [
   ['STAYING', 'Đang lưu trú'],
   ['COMPLETED', 'Đã hoàn thành'],
   ['CANCELLED', 'Đã hủy'],
+] as const
+
+const STATUS_FILTER_OPTIONS = [
+  ['PENDING_DEPOSIT', 'Đơn chờ đặt cọc'],
+  ['PENDING_VERIFICATION', 'Đơn chờ xác minh cọc'],
+  ['PENDING', 'Đơn chờ xác nhận'],
+  ['CONFIRMED', 'Đơn đã xác nhận'],
+  ['CHECKED_IN', 'Đơn đang lưu trú'],
+  ['CHECKED_OUT', 'Đơn đã trả phòng'],
+  ['COMPLETED', 'Đơn đã hoàn thành'],
+  ['CANCELLED', 'Đơn đã hủy'],
+  ['REJECTED', 'Đơn bị từ chối'],
+  ['EXPIRED', 'Đơn hết hạn'],
+  ['NO_SHOW', 'Đơn không đến'],
 ] as const
 
 function matchesTabFilter(status: string, filter: string) {
@@ -126,18 +141,35 @@ export function MyBookingsPage() {
 
   return (
     <main className="hg-account-page">
-      <div className="hg-container">
-        <PageHeader
-          kicker="HỒ SƠ CỦA BẠN"
-          title="Những kỳ nghỉ đã chọn."
-          detail="Theo dõi trạng thái thanh toán, lịch nhận phòng và chi tiết những lần lưu trú của bạn tại Hoàng Gia."
-          action={
+      <section className="hg-page-banner hg-account-banner">
+        <div className="hg-container hg-account-banner-inner">
+          <div className="hg-account-banner-copy">
+            <div className="hg-breadcrumb">
+              <Link to="/">Trang chủ</Link>
+              <ChevronRight size={14} aria-hidden="true" />
+              <span>Đơn đặt phòng</span>
+            </div>
+            <span className="hg-kicker">HỒ SƠ CỦA BẠN</span>
+            <h1 className="hg-serif-em">
+              Những kỳ nghỉ <em>đã chọn</em>
+            </h1>
+            <p>Theo dõi trạng thái thanh toán, lịch nhận phòng và chi tiết những lần lưu trú của bạn tại Hoàng Gia.</p>
+          </div>
+          <div className="hg-account-banner-actions">
+            <nav className="hg-account-switch" aria-label="Điều hướng tài khoản">
+              <Link to="/my-bookings" className="is-active" aria-current="page">
+                Đơn đặt phòng
+              </Link>
+              <Link to="/profile">Thông tin cá nhân</Link>
+            </nav>
             <Link className="hg-btn hg-btn-primary" to="/rooms">
               Tìm phòng <ArrowRight size={16} aria-hidden="true" />
             </Link>
-          }
-        />
+          </div>
+        </div>
+      </section>
 
+      <div className="hg-container hg-account-body">
         <section className="hg-panel hg-account-toolbar" aria-label="Bộ lọc và tìm kiếm đơn đặt phòng">
           <div className="hg-account-toolbar-top">
             <div className="hg-status-tabs" role="group" aria-label="Lọc đơn đặt phòng">
@@ -186,35 +218,36 @@ export function MyBookingsPage() {
               )}
             </label>
 
-            <label className="hg-mybooking-select-field">
+            <div className="hg-mybooking-select-field">
               <span>TRẠNG THÁI</span>
-              <select
-                aria-label="Lọc theo trạng thái chi tiết"
+              <HgSelect
+                variant="field"
+                ariaLabel="Lọc theo trạng thái chi tiết"
                 value={filter}
-                onChange={(e) => updateFilter('status', e.target.value === 'ALL' ? '' : e.target.value)}
-              >
-                <option value="ALL">Tất cả trạng thái</option>
-                {Object.entries(bookingStatusLabel).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label} · {value}
-                  </option>
-                ))}
-              </select>
-            </label>
+                onChange={(value) => updateFilter('status', value === 'ALL' ? '' : value)}
+                options={[
+                  { value: 'ALL', label: 'Tất cả trạng thái' },
+                  ...STATUS_FILTER_OPTIONS.map(([value, label]) => ({ value, label })),
+                ]}
+              />
+            </div>
 
-            <label className="hg-mybooking-select-field">
+            <div className="hg-mybooking-select-field">
               <span>SẮP XẾP</span>
-              <select
-                aria-label="Sắp xếp đơn đặt phòng"
+              <HgSelect
+                variant="field"
+                align="right"
+                ariaLabel="Sắp xếp đơn đặt phòng"
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as BookingSort)}
-              >
-                <option value="NEWEST">Mới nhất</option>
-                <option value="CHECKIN_ASC">Ngày nhận phòng gần nhất</option>
-                <option value="TOTAL_DESC">Tổng tiền cao đến thấp</option>
-                <option value="TOTAL_ASC">Tổng tiền thấp đến cao</option>
-              </select>
-            </label>
+                onChange={(value) => setSortBy(value as BookingSort)}
+                options={[
+                  { value: 'NEWEST', label: 'Mới nhất' },
+                  { value: 'CHECKIN_ASC', label: 'Ngày nhận phòng gần nhất' },
+                  { value: 'TOTAL_DESC', label: 'Tổng tiền cao đến thấp' },
+                  { value: 'TOTAL_ASC', label: 'Tổng tiền thấp đến cao' },
+                ]}
+              />
+            </div>
           </div>
         </section>
 
@@ -256,7 +289,7 @@ export function MyBookingsPage() {
                       <span>PHÒNG ĐÃ CHỌN</span>
                       <b>
                         <BedDouble size={14} aria-hidden="true" />{' '}
-                        {b.roomNumbers?.map((n) => `Phòng ${n}`).join(', ') || '—'}
+                        {b.roomNumbers?.map((n) => `Phòng ${n}`).join(', ') || 'Chưa gán phòng'}
                       </b>
                       <small>{b.rooms?.length || b.roomNumbers?.length || 0} phòng</small>
                     </div>
@@ -296,8 +329,8 @@ export function MyBookingsPage() {
                     ) : (
                       <span className="hg-mybooking-hint">
                         {b.status === 'CHECKED_IN'
-                          ? 'Chúc bạn có kỳ nghỉ vui vẻ.'
-                          : 'Cảm ơn bạn đã chọn HOÀNG GIA.'}
+                          ? 'Chúc bạn có kỳ nghỉ thật trọn vẹn'
+                          : 'Cảm ơn bạn đã đồng hành cùng Hoàng Gia'}
                       </span>
                     )}
                   </div>
