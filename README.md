@@ -14,13 +14,13 @@ Dự án **Hoàng Gia Hotel** xây dựng một hệ thống web tập trung cho
 
 ## 2. Công nghệ sử dụng
 
-- **Backend (Production / Local của bạn)**: Dự án hướng tới chạy với **Java (Spring Boot)** kết nối **MySQL 8+** qua biến môi trường trong `.env` (các file `backend/` bằng Node.js/Express chỉ dùng làm API preview trong môi trường AI Studio).
+- **Backend (Production / Local của bạn — `backend/`)**: Backend **Java (Spring Boot + Maven)** kết nối **MySQL 8+** qua biến môi trường trong `.env` (các file `backend-ts/` bằng Node.js/Express chỉ dùng làm API preview trong môi trường AI Studio).
 - **Frontend**: React 19, TypeScript, Vite, Tailwind CSS v4, TanStack Query, React Router, Axios, React Hook Form + Zod, Recharts.
 - **Dữ liệu & Database (`database/`)**: Gồm `database/schema.sql` (đầy đủ 20 bảng MySQL 8+) và `database/data.sql` (dữ liệu mẫu danh mục, tài khoản demo, cấu hình giá, đặt phòng và hóa đơn).
 
 > **Lưu ý về Database & Preview**:
 > - Để import vào MySQL Workbench / MySQL CLI cho backend Java, chạy `database/schema.sql` trước rồi chạy `database/data.sql`.
-> - Trong bản preview trên AI Studio (không cài Java/MySQL), `backend/store.ts` đọc 6 bảng danh mục từ `database/data.sql` lúc khởi động và lưu dữ liệu phát sinh tạm thời trong RAM.
+> - Trong bản preview trên AI Studio (không cài Java/MySQL), `backend-ts/store.ts` đọc 6 bảng danh mục từ `database/data.sql` lúc khởi động và lưu dữ liệu phát sinh tạm thời trong RAM.
 
 ---
 
@@ -109,7 +109,8 @@ Hệ thống nạp sẵn 4 tài khoản mẫu với mật khẩu chung là **`12
 ## 6. Cấu trúc thư mục chính
 
 ```text
-├── backend/             # Backend Express API, TypeScript config & lưu trữ dữ liệu (index.ts, store.ts)
+├── backend/             # Backend Java Maven + Spring Boot (com.hotel, kết nối MySQL 8+)
+├── backend-ts/          # Backend Express API, TypeScript config & lưu trữ dữ liệu preview (index.ts, store.ts)
 ├── frontend/            # Ứng dụng React + TypeScript + Vite (Customer, Reception, Admin)
 ├── database/            # Script SQL khởi tạo schema (schema.sql) và dữ liệu mẫu (data.sql)
 ├── .env.example         # Mẫu biến môi trường

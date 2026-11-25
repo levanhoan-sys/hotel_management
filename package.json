@@ -7,11 +7,11 @@
     "frontend"
   ],
   "scripts": {
-    "dev": "tsx backend/index.ts",
+    "dev": "tsx backend-ts/index.ts",
     "build": "npm --prefix frontend run build",
-    "lint": "npm --prefix frontend run lint && tsc --noEmit -p backend/tsconfig.json",
+    "lint": "npm --prefix frontend run lint && tsc --noEmit -p backend-ts/tsconfig.json",
     "test": "npm --prefix frontend test",
-    "start": "NODE_ENV=production tsx backend/index.ts"
+    "start": "NODE_ENV=production tsx backend-ts/index.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
