@@ -1,0 +1,13 @@
+{
+  "name": "hotel-management-system",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev:backend": "node -e \"const { spawnSync } = require('node:child_process'); const win = process.platform === 'win32'; const r = spawnSync(win ? 'mvnw.cmd' : './mvnw', ['spring-boot:run'], { cwd: 'backend', stdio: 'inherit', shell: win }); process.exit(r.status ?? 1);\"",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "lint": "npm --prefix frontend run lint",
+    "test": "npm --prefix frontend test"
+  }
+}

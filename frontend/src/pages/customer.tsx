@@ -1,0 +1,8 @@
+export { HomePage } from './customer/HomePage'
+export { RoomsPage } from './customer/RoomsPage'
+export { RoomDetailPage } from './customer/RoomDetailPage'
+export { AuthPage } from './customer/AuthPage'
+export { BookingPage } from './customer/BookingPage'
+export { BookingDetailPage } from './customer/BookingDetailPage'
+export { MyBookingsPage } from './customer/MyBookingsPage'
+export { ProfilePage } from './customer/ProfilePage'

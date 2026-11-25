@@ -1,0 +1,86 @@
+/* ==========================================================================
+   Hoàng Gia Hotel — Modern Luxury Design Tokens
+   Palette: Moss Green (#173D2B) · Warm Cream (#F7F3EB) · Champagne Gold (#B58A45)
+   ========================================================================== */
+
+:root {
+  /* Brand Surfaces & Moss Green */
+  --hg-moss-950: #0f2a1e;
+  --hg-moss-900: #173d2b;
+  --hg-moss-800: #1f4b36;
+  --hg-moss-700: #295b43;
+  --hg-moss-100: #ebf2ed;
+  --hg-moss-50: #f4f8f5;
+
+  /* Warm Cream & Paper Surfaces */
+  --hg-cream-50: #fbf9f5;
+  --hg-cream-100: #f7f3eb;
+  --hg-cream-200: #efe9dc;
+  --hg-cream-300: #e5ddd0;
+  --hg-white: #ffffff;
+
+  /* Champagne Gold Accents */
+  --hg-gold-700: #7f5c24;
+  --hg-gold-600: #9a7233;
+  --hg-gold-500: #b58a45;
+  --hg-gold-400: #c9a465;
+  --hg-gold-100: #f5efe2;
+  --hg-gold-50: #fbf8f1;
+
+  /* Neutral Ink & Hairlines */
+  --hg-ink-900: #1d241f;
+  --hg-ink-700: #39433c;
+  --hg-ink-600: #525c55;
+  --hg-ink-400: #7a827c;
+  --hg-border: #e5ddd0;
+  --hg-border-strong: #d5cbb9;
+
+  /* Semantic Status Colors */
+  --hg-success-text: #275b3c;
+  --hg-success-bg: #eaf3ed;
+  --hg-success-dot: #3a8257;
+
+  --hg-warning-text: #8e5f1c;
+  --hg-warning-bg: #f6efe0;
+  --hg-warning-dot: #c18c3c;
+
+  --hg-info-text: #2e5372;
+  --hg-info-bg: #eaf0f6;
+  --hg-info-dot: #4b7da5;
+
+  --hg-danger-text: #973d35;
+  --hg-danger-bg: #faecea;
+  --hg-danger-dot: #c2554a;
+
+  --hg-neutral-text: #5a625c;
+  --hg-neutral-bg: #efece6;
+  --hg-neutral-dot: #8c928d;
+
+  /* Typography */
+  --hg-font-serif: "Playfair Display", Georgia, serif;
+  --hg-font-sans: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --hg-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Radii */
+  --hg-radius-sm: 6px;
+  --hg-radius-md: 10px;
+  --hg-radius-lg: 14px;
+  --hg-radius-xl: 18px;
+  --hg-radius-pill: 999px;
+
+  /* Elevation */
+  --hg-shadow-xs: 0 1px 2px rgba(23, 61, 43, 0.04);
+  --hg-shadow-sm: 0 4px 14px rgba(23, 61, 43, 0.06);
+  --hg-shadow-md: 0 12px 32px rgba(23, 61, 43, 0.1);
+  --hg-shadow-lg: 0 22px 54px rgba(15, 42, 30, 0.18);
+
+  /* Motion */
+  --hg-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --hg-duration: 180ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --hg-duration: 0ms;
+  }
+}
