@@ -1,8 +1,11 @@
 package com.hotel.controller;
 
 import com.hotel.dto.response.ApiResponse;
+import com.hotel.dto.response.RoomDayResponse;
+import com.hotel.dto.response.RoomRecommendationResponse;
 import com.hotel.dto.response.RoomResponse;
 import com.hotel.service.RoomService;
+import com.hotel.service.impl.RoomRecommendationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -14,10 +17,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/rooms")
 @RequiredArgsConstructor
-public class RoomControlld fer {
+public class RoomController {
 
     private final RoomService roomService;
-    private final com.hotel.service.impl.RoomRecommendationService recommendationService;
+    private final RoomRecommendationService recommendationService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<RoomResponse>>> getAllRooms(
@@ -37,7 +40,7 @@ public class RoomControlld fer {
     }
 
     @GetMapping("/recommendations")
-    public ResponseEntity<ApiResponse<List<com.hotel.dto.response.RoomRecommendationResponse>>> recommendations(
+    public ResponseEntity<ApiResponse<List<RoomRecommendationResponse>>> recommendations(
             @RequestParam(required = false) Long referenceRoomId,
             @RequestParam(required = false) Long roomTypeId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkIn,
@@ -51,9 +54,9 @@ public class RoomControlld fer {
     }
 
     @GetMapping("/{id}/calendar")
-    public ApiResponse<List<com.hotel.dto.response.RoomDayResponse>> calendar(@PathVariable Long id,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+    public ApiResponse<List<RoomDayResponse>> calendar(@PathVariable Long id,
+                                                       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                                                       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return ApiResponse.ok(roomService.getRoomCalendar(id, from, to));
     }
 

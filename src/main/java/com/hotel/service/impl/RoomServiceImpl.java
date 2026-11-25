@@ -7,6 +7,7 @@ import com.hotel.dto.response.RoomBlockResponse;
 import com.hotel.entity.Room;
 import com.hotel.entity.RoomBlock;
 import com.hotel.entity.RoomType;
+import com.hotel.entity.ServiceItem;
 import com.hotel.enums.RoomStatus;
 import com.hotel.exception.BadRequestException;
 import com.hotel.exception.ResourceNotFoundException;
@@ -21,7 +22,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -138,9 +141,9 @@ public class RoomServiceImpl implements RoomService {
         return roomRepository.searchRooms(checkIn, checkOut, roomTypeId, minCapacity, minPrice, maxPrice).stream().map(RoomResponse::fromEntity).toList();
     }
 
-    private java.util.Set<com.hotel.entity.ServiceItem> resolveServices(java.util.Set<Long> ids) {
+    private Set<ServiceItem> resolveServices(Set<Long> ids) {
         if (ids == null || ids.isEmpty()) return new java.util.HashSet<>();
-        java.util.Set<com.hotel.entity.ServiceItem> services = new java.util.HashSet<>(serviceItemRepository.findAllById(ids));
+        Set<com.hotel.entity.ServiceItem> services = new HashSet<>(serviceItemRepository.findAllById(ids));
         if (services.size() != ids.size()) throw new ResourceNotFoundException("One or more services were not found");
         return services;
     }

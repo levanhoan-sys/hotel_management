@@ -7,7 +7,6 @@ spring:
   sql:
     init:
       mode: always
-      schema-locations: classpath:schema-deposit.sql
       data-locations: classpath:data.sql
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:hotel_db}

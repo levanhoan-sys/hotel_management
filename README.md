@@ -130,11 +130,11 @@ hotel-management-system/
     git clone https://github.com/levanhoan-sys/hotel_management.git
     cd hotel_management
 
-Tạo database rỗng trước khi chạy backend:
+Tạo database rỗng trước khi chạy backend bằng MySQL CLI (thay `root` nếu tài khoản quản trị MySQL của bạn có tên khác; `-p` sẽ yêu cầu nhập mật khẩu):
 
-    CREATE DATABASE hotel_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS hotel_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
-Hibernate dùng ddl-auto: update; ứng dụng chạy schema-deposit.sql và data.sql lúc khởi động. Database cần tồn tại và user MySQL cần quyền cập nhật schema/seed. Profile dev bổ sung data-dev.sql.
+Hibernate dùng ddl-auto: update để tạo/cập nhật bảng. Database cần tồn tại và user MySQL cần quyền cập nhật schema/seed. Spring SQL init chạy `data.sql` sau khi Hibernate xử lý schema. Tệp này chứa bộ dữ liệu mẫu đầy đủ cho cài đặt mới và được nạp mặc định; các lệnh seed dùng ID ổn định/`INSERT IGNORE` để tránh thêm bản sao khi khởi động lại.
 
 ### 7.2 Cấu hình và chạy backend
 
@@ -170,7 +170,15 @@ Mở http://localhost:5173. Có thể để VITE_API_BASE_URL theo mặc định
 
 ### 7.4 Dữ liệu demo
 
-Đặt SPRING_PROFILES_ACTIVE=dev để nạp data-dev.sql. Tài khoản demo trong seed dùng chung mật khẩu hotel-demo-2026; chỉ dùng local, không dùng trên môi trường thật. Dữ liệu phòng/loại phòng/dịch vụ từ data.sql vẫn được nạp ở cấu hình mặc định.
+`data.sql` được nạp ở cấu hình mặc định, bao gồm dữ liệu quản trị viên, lễ tân, khách hàng, phòng, đặt phòng, thanh toán, dịch vụ, hóa đơn và khóa phòng. Tất cả tài khoản mẫu dùng mật khẩu `hotel-demo-2026`:
+
+| Vai trò | Tài khoản |
+|---|---|
+| Quản trị viên | `demo.admin` |
+| Lễ tân | `demo.reception` |
+| Khách hàng | `demo.customer1`, `demo.customer2`, `demo.customer3` |
+
+Chỉ dùng tài khoản/mật khẩu này trên môi trường local. Không sử dụng bộ seed demo trong môi trường thật.
 
 ## 8. Cấu hình môi trường
 
@@ -231,15 +239,13 @@ flowchart TD
 
 Booking lưu từng phòng vật lý trong BookingDetail. Khoảng ngày dùng quy tắc [checkIn, checkOut); availability xét booking đang giữ hiệu lực/đã xác nhận/đang lưu trú và RoomBlock. Backend kiểm tra lại và khóa phòng khi tạo booking để hạn chế đặt trùng.
 
-Khách chỉ báo đã chuyển khoản; thao tác này không đánh dấu payment thành công. Lễ tân kiểm tra sao kê, xác nhận số tiền chính xác và mã giao dịch chưa dùng. QR là ảnh lấy từ dịch vụ VietQR bên ngoài. Chi tiết: [VIETQR_INTEGRATION.md](VIETQR_INTEGRATION.md), [DEPOSIT_PAYMENT_FLOW.md](DEPOSIT_PAYMENT_FLOW.md), [MANUAL_PAYMENT_VERIFICATION.md](MANUAL_PAYMENT_VERIFICATION.md).
-
-### Lưu trú và hóa đơn
+Khách chỉ báo đã chuyển khoản; thao tác này không đánh dấu payment thành công. Lễ tân kiểm tra sao kê, xác nhận số tiền chính xác và mã giao dịch chưa dùng. QR là ảnh lấy từ dịch vụ VietQR bên ngoài. Chi tiết:
 
 Lễ tân check-in booking đã xác nhận, ghi nhận dịch vụ phát sinh, lập/cập nhật và phát hành hóa đơn, ghi nhận khoản thanh toán rồi hoàn tất check-out theo trạng thái backend. Hệ thống hiện không cung cấp luồng hoàn tiền.
 
 ## 10. Cơ sở dữ liệu
 
-Ứng dụng dùng MySQL và JPA/Hibernate. Hibernate cập nhật schema entity bằng ddl-auto: update; schema-deposit.sql cập nhật tương thích bảng payments; data.sql và profile dev nạp dữ liệu mẫu. Không có Flyway/Liquibase trong dependencies hiện tại.
+Ứng dụng dùng MySQL và JPA/Hibernate. Hibernate cập nhật schema entity bằng ddl-auto: update; schema-deposit.sql cập nhật tương thích bảng payments; data.sql nạp toàn bộ dữ liệu mẫu ở cả cấu hình mặc định và profile dev. Không có Flyway/Liquibase trong dependencies hiện tại.
 
 | Entity | Vai trò |
 |---|---|

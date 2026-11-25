@@ -19,6 +19,7 @@ import com.hotel.dto.request.AddServiceOrderRequest;
 import com.hotel.dto.request.BookingActionRequest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/bookings")
@@ -69,7 +70,7 @@ public class BookingController {
     public ResponseEntity<ApiResponse<List<BookingResponse>>> getBookingsByCustomer(@PathVariable Long customerId, Authentication authentication) {
         var customer = customers.findByUsername(authentication.getName()).orElse(null);
         boolean staff = isReceptionist(authentication);
-        if (!staff && (customer == null || !customer.getId().equals(customerId))) throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN);
+        if (!staff && (customer == null || !customer.getId().equals(customerId))) throw new ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN);
         return ResponseEntity.ok(ApiResponse.ok(bookingService.getBookingsByCustomerId(customerId)));
     }
 
@@ -84,7 +85,7 @@ public class BookingController {
     private void ensureOwnerOrStaff(BookingResponse booking, Authentication auth) {
         boolean staff = isReceptionist(auth);
         var customer = customers.findByUsername(auth.getName()).orElse(null);
-        if (!staff && (customer == null || !customer.getId().equals(booking.getCustomerId()))) throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN);
+        if (!staff && (customer == null || !customer.getId().equals(booking.getCustomerId()))) throw new ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN);
     }
 
     private boolean isReceptionist(Authentication auth) {

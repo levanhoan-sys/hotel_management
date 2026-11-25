@@ -20,6 +20,7 @@ import com.hotel.repository.BookingRepository;
 import com.hotel.repository.InvoiceRepository;
 import com.hotel.repository.PaymentRepository;
 import com.hotel.repository.RoomRepository;
+import com.hotel.repository.ServiceOrderRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -39,12 +40,13 @@ class InvoiceServiceImplTest {
     @Mock InvoiceRepository invoices;
     @Mock PaymentRepository payments;
     @Mock RoomRepository rooms;
+    @Mock ServiceOrderRepository serviceOrders;
 
     @Test void paymentCannotExceedInvoiceBalance() {
         Invoice invoice = issuedInvoice();
         when(invoices.findByIdForUpdate(8L)).thenReturn(Optional.of(invoice));
         when(payments.findByIdempotencyKey("attempt-1")).thenReturn(Optional.empty());
-        InvoiceServiceImpl service = new InvoiceServiceImpl(bookings, invoices, payments, rooms);
+        InvoiceServiceImpl service = new InvoiceServiceImpl(bookings, invoices, payments, rooms, serviceOrders);
 
         assertThrows(BadRequestException.class, () -> service.recordPayment(8L,
                 new PaymentRequest(new BigDecimal("100.01"), PaymentMethod.CASH, "attempt-1", null)));
@@ -57,7 +59,7 @@ class InvoiceServiceImplTest {
         original.setInvoice(invoice);
         when(invoices.findByIdForUpdate(8L)).thenReturn(Optional.of(invoice));
         when(payments.findByIdempotencyKey("retry-key")).thenReturn(Optional.of(original));
-        InvoiceServiceImpl service = new InvoiceServiceImpl(bookings, invoices, payments, rooms);
+        InvoiceServiceImpl service = new InvoiceServiceImpl(bookings, invoices, payments, rooms, serviceOrders);
 
         var response = service.recordPayment(8L,
                 new PaymentRequest(new BigDecimal("25.00"), PaymentMethod.BANK_TRANSFER, "retry-key", "bank-ref"));
@@ -81,7 +83,7 @@ class InvoiceServiceImplTest {
         when(bookings.findByIdForUpdate(12L)).thenReturn(Optional.of(booking));
         when(invoices.findByBookingIdForUpdate(12L)).thenReturn(Optional.empty());
         when(invoices.save(any(Invoice.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        InvoiceServiceImpl service = new InvoiceServiceImpl(bookings, invoices, payments, rooms);
+        InvoiceServiceImpl service = new InvoiceServiceImpl(bookings, invoices, payments, rooms, serviceOrders);
 
         var result = service.createOrUpdateDraft(12L,
                 new com.hotel.dto.request.InvoiceDraftRequest(new BigDecimal("2.00"), new BigDecimal("1.00")));

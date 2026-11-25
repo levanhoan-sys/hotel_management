@@ -394,3 +394,12 @@
 
 .booking-code-display{font-variant-numeric:lining-nums tabular-nums;font-feature-settings:"lnum" 1,"tnum" 1}.customer-site .invoice-booking-code{margin:8px 0 0;color:#74776e;font-size:13px}.customer-site .invoice-booking-code strong{color:#354238;font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;font-variant-numeric:lining-nums tabular-nums}
 .admin-form .form-grid,.ops-page .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:18px}.admin-form .form-field,.ops-page .form-grid .form-field{font-size:13px}.ops-page .form-grid .form-field input{height:43px}@media(max-width:650px){.ops-page .form-grid{grid-template-columns:1fr}}
+.reception-shell .walk-in-customer-search{min-height:48px;font-size:16px!important}
+.reception-shell .walk-in-customer-search{padding:0 13px}
+.reception-shell .walk-in-customer-results{display:flex!important;flex-direction:column;max-height:220px;overflow-y:auto;overscroll-behavior:contain;border:1px solid #d8ddd5;background:#fff;box-shadow:0 8px 18px #26352c18}
+.reception-shell .walk-in-customer-option{display:flex!important;flex-direction:column;align-items:flex-start;gap:3px;width:100%;flex:none;padding:10px 13px;text-align:left;border:0;border-bottom:1px solid #eceee8;background:#fff;color:#26352c;cursor:pointer}
+.reception-shell .walk-in-customer-option:hover,.reception-shell .walk-in-customer-option:focus-visible{background:#f2f4ef;outline:0}
+.reception-shell .walk-in-customer-option b{font-size:15px!important}
+.reception-shell .walk-in-customer-option span,.reception-shell .walk-in-customer-empty,.reception-shell .walk-in-customer-selected{font-size:13px!important;color:#536257}
+.reception-shell .walk-in-customer-empty{padding:11px 13px}
+.reception-shell .walk-in-customer-selected{padding:9px 11px;background:#edf1e9;color:#405942}
