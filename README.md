@@ -14,24 +14,26 @@ Dự án **Hoàng Gia Hotel** xây dựng một hệ thống web tập trung cho
 
 ## 2. Công nghệ sử dụng
 
-- **Backend**: Node.js, Express 5, TypeScript (`tsx`), xác thực JWT (`HS256`) và mã hóa mật khẩu bằng `bcryptjs`.
+- **Backend (Production / Local của bạn)**: Dự án hướng tới chạy với **Java (Spring Boot)** kết nối **MySQL 8+** qua biến môi trường trong `.env` (các file `backend/` bằng Node.js/Express chỉ dùng làm API preview trong môi trường AI Studio).
 - **Frontend**: React 19, TypeScript, Vite, Tailwind CSS v4, TanStack Query, React Router, Axios, React Hook Form + Zod, Recharts.
-- **Dữ liệu khởi tạo**: `server/store.ts` lưu dữ liệu trên bộ nhớ (**in-memory**) và tự động đọc file `data.sql` lúc khởi động để nạp 4 hạng phòng, 12 phòng, bộ ảnh gallery và 8 dịch vụ mẫu.
+- **Dữ liệu & Database (`database/`)**: Gồm `database/schema.sql` (đầy đủ 20 bảng MySQL 8+) và `database/data.sql` (dữ liệu mẫu danh mục, tài khoản demo, cấu hình giá, đặt phòng và hóa đơn).
 
-> **Lưu ý về Database (`data.sql`)**: File `data.sql` hiện chứa sẵn schema & dữ liệu seed cho 6 bảng danh mục (`room_types`, `room_type_images`, `service_items`, `rooms`, `room_images`, `room_services`). Các dữ liệu nghiệp vụ (`users`, `bookings`, `payments`, `invoices`, `refunds`, `pricingRates`…) đang được lưu trong RAM và sẽ reset khi khởi động lại server. Nếu muốn kết nối MySQL thật để lưu lâu dài, cần import `data.sql`, bổ sung thêm các bảng nghiệp vụ và thay lớp lưu trữ trong `server/store.ts` bằng driver/ORM (ví dụ `mysql2`, Prisma hoặc Drizzle).
+> **Lưu ý về Database & Preview**:
+> - Để import vào MySQL Workbench / MySQL CLI cho backend Java, chạy `database/schema.sql` trước rồi chạy `database/data.sql`.
+> - Trong bản preview trên AI Studio (không cài Java/MySQL), `backend/store.ts` đọc 6 bảng danh mục từ `database/data.sql` lúc khởi động và lưu dữ liệu phát sinh tạm thời trong RAM.
 
 ---
 
 ## 3. Yêu cầu hệ thống
 
-- **Node.js**: Phiên bản `20.19+` hoặc `22+`
-- **npm**: Đi kèm theo Node.js
+- **Backend (Java + MySQL khi chạy thật)**: JDK, Maven/Gradle, MySQL 8+
+- **Frontend / Preview**: Node.js `20.19+` hoặc `22+`, npm
 
 ---
 
 ## 4. Hướng dẫn cài đặt và chạy dự án
 
-### Bước 1: Clone mã nguồn và cài dependencies
+### Bước 1: Clone mã nguồn và cài dependencies Frontend
 
 ```bash
 git clone <url-repository-cua-ban>
@@ -39,9 +41,9 @@ cd <ten-thu-muc-du-an>
 npm install
 ```
 
-### Bước 2: Cấu hình biến môi trường (tùy chọn)
+### Bước 2: Cấu hình biến môi trường (`.env`) cho Java Backend, MySQL & Frontend
 
-Sao chép file `.env.example` thành `.env` ở thư mục gốc nếu bạn muốn tùy chỉnh cấu hình:
+Sao chép file `.env.example` thành `.env` ở thư mục gốc và điền thông số kết nối Java/MySQL:
 
 ```bash
 cp .env.example .env
@@ -49,18 +51,23 @@ cp .env.example .env
 
 Các biến môi trường hỗ trợ:
 
-| Nhóm | Biến | Mô tả |
+| Nhóm | Biến | Mô tả / Ví dụ |
 |---|---|---|
+| Java Server & MySQL | `SERVER_PORT` | Cổng chạy Spring Boot (ví dụ `8080`) |
+| | `SPRING_DATASOURCE_URL` | JDBC URL MySQL (ví dụ `jdbc:mysql://localhost:3306/hotel_management?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8`) |
+| | `SPRING_DATASOURCE_USERNAME` | Tên đăng nhập MySQL |
+| | `SPRING_DATASOURCE_PASSWORD` | Mật khẩu MySQL |
+| | `SPRING_JPA_HIBERNATE_DDL_AUTO` | Chế độ Hibernate DDL (khuyên dùng `validate` hoặc `none` khi đã chạy `schema.sql`) |
 | Bảo mật & CORS | `ACCESS_TOKEN_SECRET` | Chuỗi bí mật ký JWT |
-| | `CORS_ALLOWED_ORIGINS` | Danh sách origin được phép gọi API |
+| | `CORS_ALLOWED_ORIGINS` | Danh sách origin frontend được phép gọi API (ví dụ `http://localhost:3000`) |
 | Tài khoản khởi tạo | `APP_BOOTSTRAP_ADMIN_USERNAME`, `APP_BOOTSTRAP_ADMIN_PASSWORD` | Tạo thêm tài khoản Admin lúc khởi động |
 | | `APP_BOOTSTRAP_RECEPTIONIST_USERNAME`, `APP_BOOTSTRAP_RECEPTIONIST_PASSWORD` | Tạo thêm tài khoản Lễ tân lúc khởi động |
 | Thanh toán VietQR | `HOTEL_BANK_BIN`, `HOTEL_BANK_ACCOUNT`, `HOTEL_BANK_ACCOUNT_NAME` | Mã ngân hàng, số tài khoản, tên chủ tài khoản nhận cọc |
-| Thông tin hiển thị (Frontend) | `VITE_API_BASE_URL` | Base URL cho API (mặc định `/api`) |
+| Thông tin hiển thị (Frontend) | `VITE_API_BASE_URL` | URL backend Java cho frontend (ví dụ `http://localhost:8080/api`, mặc định `/api`) |
 | | `VITE_HOTEL_NAME`, `VITE_HOTEL_ADDRESS`, `VITE_HOTEL_LATITUDE`, `VITE_HOTEL_LONGITUDE`, `VITE_HOTEL_MAP_EMBED_URL` | Tên, địa chỉ và bản đồ Google Maps của khách sạn |
 | | `VITE_HOTLINE_NUMBER`, `VITE_ZALO_PERSONAL_URL` | Số hotline và link Zalo liên hệ nổi trên trang khách hàng |
 
-*(Nếu không tạo `.env`, hệ thống vẫn chạy bình thường với các giá trị mặc định phục vụ phát triển local.)*
+*(Nếu chỉ chạy chế độ preview Frontend + mock API trong workspace này mà không tạo `.env`, hệ thống vẫn chạy với cấu hình mặc định local.)*
 
 ### Bước 3: Chạy ở chế độ phát triển (Development)
 
@@ -102,10 +109,10 @@ Hệ thống nạp sẵn 4 tài khoản mẫu với mật khẩu chung là **`12
 ## 6. Cấu trúc thư mục chính
 
 ```text
-├── server.ts            # Express API server & phục vụ Vite/static frontend
-├── server/store.ts      # Lưu trữ in-memory, seed dữ liệu & nghiệp vụ đặt phòng/thanh toán
-├── data.sql             # SQL schema + dữ liệu mẫu hạng phòng, phòng, ảnh và dịch vụ
+├── backend/             # Backend Express API, TypeScript config & lưu trữ dữ liệu (index.ts, store.ts)
 ├── frontend/            # Ứng dụng React + TypeScript + Vite (Customer, Reception, Admin)
+├── database/            # Script SQL khởi tạo schema (schema.sql) và dữ liệu mẫu (data.sql)
 ├── .env.example         # Mẫu biến môi trường
+├── README.md            # Tài liệu hướng dẫn dự án
 └── package.json         # Scripts điều phối workspace (dev, build, lint, test, start)
 ```

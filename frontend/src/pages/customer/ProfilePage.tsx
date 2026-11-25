@@ -120,7 +120,7 @@ export function ProfilePage() {
           <>
             <section className="hg-panel hg-profile-hero" aria-label="Tổng quan tài khoản">
               <div className="hg-profile-avatar" aria-hidden="true">
-                <img src="/a_clean_icon_style_image_a_simple_white_user_pers.png" alt="" width={1536} height={1024} />
+                <img src="/images/avatar-default.png" alt="" width={1536} height={1024} />
               </div>
               <div className="hg-profile-identity">
                 <h2>{displayName}</h2>

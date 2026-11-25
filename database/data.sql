@@ -1,63 +1,12 @@
 -- ============================================================================
--- Hoàng Gia Hotel - Seed Data (Room Types, Rooms, 5-Photo Galleries & Services)
--- Nguồn ảnh: Unsplash (https://unsplash.com/s/photos/hotel)
--- Tương thích MySQL / PostgreSQL / SQLite và được backend đọc khi khởi động.
+-- Hoàng Gia Hotel — Full MySQL Seed Data
+-- Chạy file database/schema.sql trước khi import file này vào MySQL.
+-- Lưu ý: 6 khối INSERT danh mục đầu tiên (room_types -> room_services) cũng được
+-- backend/store.ts đọc tự động khi khởi động chế độ preview in-memory.
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS room_types (
-  id INT PRIMARY KEY,
-  name VARCHAR(120) NOT NULL,
-  base_price DECIMAL(15, 2) NOT NULL,
-  capacity INT NOT NULL,
-  description TEXT,
-  image_url VARCHAR(500),
-  area_sqm INT,
-  amenities TEXT
-);
-
-CREATE TABLE IF NOT EXISTS room_type_images (
-  id INT PRIMARY KEY,
-  room_type_id INT NOT NULL,
-  image_url VARCHAR(500) NOT NULL,
-  caption VARCHAR(255),
-  display_order INT NOT NULL DEFAULT 1,
-  FOREIGN KEY (room_type_id) REFERENCES room_types(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS service_items (
-  id INT PRIMARY KEY,
-  name VARCHAR(150) NOT NULL,
-  unit_price DECIMAL(15, 2) NOT NULL,
-  unit VARCHAR(50) NOT NULL,
-  active BOOLEAN NOT NULL DEFAULT TRUE
-);
-
-CREATE TABLE IF NOT EXISTS rooms (
-  id INT PRIMARY KEY,
-  room_number VARCHAR(20) NOT NULL UNIQUE,
-  floor INT NOT NULL,
-  room_type_id INT NOT NULL,
-  status VARCHAR(30) NOT NULL DEFAULT 'AVAILABLE',
-  operational BOOLEAN NOT NULL DEFAULT TRUE,
-  FOREIGN KEY (room_type_id) REFERENCES room_types(id)
-);
-
-CREATE TABLE IF NOT EXISTS room_images (
-  id INT PRIMARY KEY,
-  room_id INT NOT NULL,
-  image_url VARCHAR(500) NOT NULL,
-  caption VARCHAR(255),
-  display_order INT NOT NULL DEFAULT 1,
-  FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS room_services (
-  room_id INT NOT NULL,
-  service_item_id INT NOT NULL,
-  PRIMARY KEY (room_id, service_item_id),
-  FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
-  FOREIGN KEY (service_item_id) REFERENCES service_items(id) ON DELETE CASCADE
-);
+USE hotel_management;
+SET NAMES utf8mb4;
 
 -- ----------------------------------------------------------------------------
 -- 1. Room Types (4 hạng phòng)
@@ -234,3 +183,79 @@ INSERT INTO room_services (room_id, service_item_id) VALUES
   (10, 1), (10, 2), (10, 3), (10, 4), (10, 5), (10, 6), (10, 7), (10, 8),
   (11, 1), (11, 2), (11, 3), (11, 4), (11, 5), (11, 6), (11, 7), (11, 8),
   (12, 1), (12, 2), (12, 3), (12, 4), (12, 5), (12, 6), (12, 7), (12, 8);
+
+-- ----------------------------------------------------------------------------
+-- 7. Pricing Configurations (Chiến lược giá theo mùa/ngày)
+-- ----------------------------------------------------------------------------
+INSERT INTO pricing_configurations (id, strategy, multiplier, default_multiplier) VALUES
+  (1, 'STANDARD', 1.0000, 1.0000),
+  (2, 'WEEKEND',  1.2000, 1.2000),
+  (3, 'HOLIDAY',  1.5000, 1.5000);
+
+-- ----------------------------------------------------------------------------
+-- 8. Users, Customers, Employees, Receptionists, Admins (Mật khẩu mẫu: 123456)
+-- ----------------------------------------------------------------------------
+INSERT INTO users (id, username, password_hash, full_name, email, phone, role, account_status, created_at) VALUES
+  (1, 'demo.customer1', '$2b$10$8Qo/lnqjTYnRLxXFcrhGK.HUM8pm1fx21GFffmSiud.eEn1uHch66', 'Demo Customer One', 'demo.customer1@hotel.local', '0900000002', 'ROLE_CUSTOMER', 'ACTIVE', NOW(6)),
+  (2, 'demo.customer2', '$2b$10$8Qo/lnqjTYnRLxXFcrhGK.HUM8pm1fx21GFffmSiud.eEn1uHch66', 'Demo Customer Two', 'demo.customer2@hotel.local', '0900000003', 'ROLE_CUSTOMER', 'ACTIVE', NOW(6)),
+  (3, 'demo.reception', '$2b$10$8Qo/lnqjTYnRLxXFcrhGK.HUM8pm1fx21GFffmSiud.eEn1uHch66', 'Demo Receptionist', 'demo.reception@hotel.local', '0900000001', 'ROLE_RECEPTIONIST', 'ACTIVE', NOW(6)),
+  (4, 'demo.admin', '$2b$10$8Qo/lnqjTYnRLxXFcrhGK.HUM8pm1fx21GFffmSiud.eEn1uHch66', 'Quản trị viên', 'demo.admin@hotel.local', '0900000000', 'ROLE_ADMIN', 'ACTIVE', NOW(6));
+
+INSERT INTO customers (id, identity_card, address, loyalty_points) VALUES
+  (1, 'DEMO-ID-0001', '1 Example Street, Ho Chi Minh City', 120),
+  (2, 'DEMO-ID-0002', '2 Example Street, Ho Chi Minh City', 40);
+
+INSERT INTO employees (id, employee_code, salary, hire_date) VALUES
+  (3, 'DEMO-FD-01', 12000000.00, CURDATE()),
+  (4, 'ADMIN-01', 25000000.00, CURDATE());
+
+INSERT INTO receptionists (id, desk_number) VALUES
+  (3, 1);
+
+INSERT INTO admins (id, admin_level) VALUES
+  (4, 'SUPER_ADMIN');
+
+-- ----------------------------------------------------------------------------
+-- 9. Bookings & Booking Details (7 đơn đặt phòng mẫu)
+-- ----------------------------------------------------------------------------
+INSERT INTO bookings (
+  id, booking_code, customer_id, check_in_date, check_out_date, status,
+  confirmed_at, checked_in_at, checked_out_at,
+  cancelled_at, cancelled_by, cancellation_reason, rejection_reason, created_at
+) VALUES
+  (1, 'DEMO-BK-PENDING', 1, DATE_ADD(CURDATE(), INTERVAL 2 DAY), DATE_ADD(CURDATE(), INTERVAL 4 DAY), 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NOW(6)),
+  (2, 'DEMO-BK-CONFIRMED', 1, DATE_ADD(CURDATE(), INTERVAL 7 DAY), DATE_ADD(CURDATE(), INTERVAL 9 DAY), 'CONFIRMED', NOW(6), NULL, NULL, NULL, NULL, NULL, NULL, NOW(6)),
+  (3, 'DEMO-BK-CHECKED-IN', 2, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 2 DAY), 'CHECKED_IN', NOW(6), NOW(6), NULL, NULL, NULL, NULL, NULL, NOW(6)),
+  (4, 'DEMO-BK-COMPLETED', 1, DATE_SUB(CURDATE(), INTERVAL 10 DAY), DATE_SUB(CURDATE(), INTERVAL 8 DAY), 'COMPLETED', DATE_SUB(NOW(6), INTERVAL 10 DAY), DATE_SUB(NOW(6), INTERVAL 10 DAY), DATE_SUB(NOW(6), INTERVAL 8 DAY), NULL, NULL, NULL, NULL, DATE_SUB(NOW(6), INTERVAL 10 DAY)),
+  (5, 'DEMO-BK-CANCELLED', 2, DATE_ADD(CURDATE(), INTERVAL 3 DAY), DATE_ADD(CURDATE(), INTERVAL 5 DAY), 'CANCELLED', NULL, NULL, NULL, NOW(6), 'demo.customer2', 'Seed example cancellation', NULL, NOW(6)),
+  (6, 'DEMO-BK-REJECTED', 1, DATE_ADD(CURDATE(), INTERVAL 4 DAY), DATE_ADD(CURDATE(), INTERVAL 5 DAY), 'REJECTED', NULL, NULL, NULL, NULL, NULL, NULL, 'Seed example rejection', NOW(6)),
+  (7, 'DEMO-BK-MULTI-ROOM', 2, DATE_ADD(CURDATE(), INTERVAL 2 DAY), DATE_ADD(CURDATE(), INTERVAL 4 DAY), 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NOW(6));
+
+INSERT INTO booking_details (id, booking_id, room_id, price_per_night, guest_count) VALUES
+  (1, 1, 1, 650000.00, 1),
+  (2, 2, 2, 650000.00, 1),
+  (3, 3, 3, 890000.00, 2),
+  (4, 4, 4, 890000.00, 2),
+  (5, 5, 5, 1650000.00, 2),
+  (6, 6, 6, 3900000.00, 4),
+  (7, 7, 7, 890000.00, 2),
+  (8, 7, 8, 890000.00, 1);
+
+-- ----------------------------------------------------------------------------
+-- 10. Invoices, Invoice Items & Payments (Cho đơn đã hoàn tất DEMO-BK-COMPLETED)
+-- ----------------------------------------------------------------------------
+INSERT INTO invoices (
+  id, booking_id, room_amount, service_amount, tax, surcharge, discount,
+  total_amount, successful_payments, balance_due, status, payment_method, is_paid, paid_at
+) VALUES
+  (1, 4, 1780000.00, 0.00, 178000.00, 0.00, 0.00, 1958000.00, 1958000.00, 0.00, 'PAID', 'CASH', TRUE, DATE_SUB(NOW(6), INTERVAL 8 DAY));
+
+INSERT INTO invoice_items (id, invoice_id, type, description, quantity, unit_price, line_total) VALUES
+  (1, 1, 'ROOM', 'Phòng 202 (2 đêm)', 2, 890000.00, 1780000.00),
+  (2, 1, 'SURCHARGE', 'Thuế VAT (10%)', 1, 178000.00, 178000.00);
+
+INSERT INTO payments (
+  id, booking_id, invoice_id, type, amount, method, status,
+  idempotency_key, reference, confirmed_transaction_reference, confirmed_by, reported_at, paid_at, created_at
+) VALUES
+  (1, NULL, 1, 'BALANCE', 1958000.00, 'CASH', 'SUCCESSFUL', 'seed-completed-payment', 'Thu tiền mặt tại quầy', NULL, 'demo.reception', NULL, DATE_SUB(NOW(6), INTERVAL 8 DAY), DATE_SUB(NOW(6), INTERVAL 8 DAY));

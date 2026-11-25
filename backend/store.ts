@@ -1491,7 +1491,7 @@ function loadSeedFromDataSql(): {
   rooms: RoomEntity[]
 } | null {
   try {
-    const filePath = path.resolve(process.cwd(), 'data.sql')
+    const filePath = path.resolve(process.cwd(), 'database', 'data.sql')
     if (!fs.existsSync(filePath)) return null
     const rawSql = fs.readFileSync(filePath, 'utf8')
     const cleanedSql = rawSql.replace(/^\s*--[^\r\n]*/gm, '')

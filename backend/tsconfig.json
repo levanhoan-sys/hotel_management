@@ -10,5 +10,5 @@
     "noEmit": true,
     "resolveJsonModule": true
   },
-  "include": ["server.ts", "server/**/*.ts"]
+  "include": ["**/*.ts"]
 }

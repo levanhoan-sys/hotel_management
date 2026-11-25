@@ -16,10 +16,10 @@ import {
   type RoleName,
   type RoomStatus,
   type UserEntity,
-} from './server/store.js'
+} from './store.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const FRONTEND_DIR = path.resolve(__dirname, 'frontend')
+const FRONTEND_DIR = path.resolve(__dirname, '..', 'frontend')
 const DIST_DIR = path.resolve(FRONTEND_DIR, 'dist')
 function resolvePort(): number {
   const idx = process.argv.indexOf('--port')
