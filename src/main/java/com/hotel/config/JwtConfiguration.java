@@ -12,7 +12,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-/** Provides JWT primitives separately from the filter chain to avoid a bean cycle. */
+
 @Configuration
 public class JwtConfiguration {
 

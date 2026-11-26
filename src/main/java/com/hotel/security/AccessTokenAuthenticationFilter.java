@@ -1,5 +1,6 @@
 package com.hotel.security;
 
+import com.hotel.entity.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,7 +26,7 @@ public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
         if (authorization != null && authorization.startsWith("Bearer ")) {
             AccessTokenService.Claims claims = tokens.verify(authorization.substring(7));
             if (claims != null) {
-                var user = users.findByUsername(claims.username()).filter(com.hotel.entity.User::isActive).orElse(null);
+                var user = users.findByUsername(claims.username()).filter(User::isActive).orElse(null);
                 if (user != null) {
                 var authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), null, List.of(new SimpleGrantedAuthority(user.getRole().name())));
                 SecurityContextHolder.getContext().setAuthentication(authentication);

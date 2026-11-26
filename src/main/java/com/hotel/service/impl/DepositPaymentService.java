@@ -21,6 +21,7 @@ import java.util.UUID;
 import java.math.BigDecimal;
 import java.time.temporal.ChronoUnit;
 import com.hotel.dto.response.BookingResponse;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -142,7 +143,7 @@ public class DepositPaymentService {
 
     private Booking lockedOwnedBooking(Long id, String username) {
         Booking booking = bookings.findByIdForUpdate(id).orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-        if (!booking.getCustomer().getUsername().equals(username)) throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN);
+        if (!booking.getCustomer().getUsername().equals(username)) throw new ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN);
         return booking;
     }
 

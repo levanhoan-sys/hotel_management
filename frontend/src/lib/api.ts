@@ -25,6 +25,7 @@ function localizeMessage(message: string) {
   const normalized = message.trim()
   if (/both check-in and check-out dates are required/i.test(normalized)) return 'Vui lòng chọn đầy đủ ngày nhận phòng và ngày trả phòng.'
   if (/check-out date must be after check-in date|check-out.*after.*check-in/i.test(normalized)) return 'Ngày trả phòng phải sau ngày nhận phòng.'
+  if (/check-out date cannot be more than one year from today/i.test(normalized)) return 'Ngày trả phòng tối đa là một năm kể từ hôm nay.'
   if (/booking room does not belong to this booking/i.test(normalized)) return 'Phòng được chọn không thuộc booking này. Vui lòng chọn lại phòng.'
   if (/service is not offered for this room/i.test(normalized)) return 'Dịch vụ này chưa được áp dụng cho phòng đã chọn.'
   if (/room services can only be requested for checked-in bookings/i.test(normalized)) return 'Chỉ có thể ghi nhận dịch vụ cho booking đang lưu trú.'

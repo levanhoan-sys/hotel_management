@@ -64,7 +64,6 @@ public class BookingServiceImpl implements BookingService {
         List<Long> requestedIds = request.getRoomIds();
         validateRoomIds(requestedIds, "A room cannot appear more than once in a booking");
 
-        // Lock rooms by ascending ID so booking creation and maintenance scheduling share a lock order.
         List<Long> sortedIds = requestedIds.stream().sorted().toList();
         List<Room> rooms = roomRepository.findAllByIdForUpdate(sortedIds);
         if (rooms.size() != requestedIds.size()) throw new ResourceNotFoundException("One or more selected rooms do not exist");
@@ -111,6 +110,8 @@ public class BookingServiceImpl implements BookingService {
         if (request.getCheckInDate().isBefore(LocalDate.now())) throw new BadRequestException("Check-in date cannot be in the past");
         if (!request.getCheckOutDate().isAfter(request.getCheckInDate()))
             throw new BadRequestException("Check-out date must be strictly after check-in date");
+        if (request.getCheckOutDate().isAfter(LocalDate.now().plusYears(1)))
+            throw new BadRequestException("Check-out date cannot be more than one year from today");
         if (request.getRoomIds() == null || request.getRoomIds().isEmpty()) throw new BadRequestException("At least one room is required");
     }
 
